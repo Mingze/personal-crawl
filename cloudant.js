@@ -35,7 +35,7 @@ var username = "8b74f433-f92c-49f3-b2c7-09ecb18e4a7f-bluemix";
 var password = "017d568e4f43f74e8bea82c54ccb800d696a6573bc2af17aa6584bea380ee1aa";
 var cloudant = Cloudant({account:username, password:password});
 
-var dbAchat = cloudant.db.use('vente');
+var dbAchat = cloudant.db.use('vente_collect');
 var dbLocation = cloudant.db.use('location');
 
 function sortObject(o) {
@@ -59,6 +59,7 @@ function sortObject(o) {
 function extract_database(database){
     var list_id_announce = [];
     var print_result = "bouquet\tchambre\tcity\tdescription\tid_announce\tlink\tmetre_carre\tpiece\tprice\tprice_m2\tsource\ttimestamp\ttitle\n";
+    var critere = ["bouquet","chambre","city","description","id_announce","link","metre_carre","piece","price","price_m2","roi", "source","timestamp","title"];
 
     database.find({selector:{}}, function(er, result) {
       if (er) {
@@ -71,21 +72,18 @@ function extract_database(database){
         // for (var j = 0; j < result.docs[i].result.length; j++){
           if(result.docs[i].result){
             for(var j = 0; j< result.docs[i].result.length; j++){
-                var json_sorted = sortObject(result.docs[i].result[j]);
-                Object.keys(json_sorted).forEach(function(key){
-                  // console.log("key got:"+key + "value:"+result.docs[i].result[j][key]);
-                  print_result += result.docs[i].result[j][key] + "\t";
 
-                });
-                  print_result += "\n";
+              for(var k = 0; k < critere.length ; k++){
+                // console.log(result.docs[i].result[j][critere[k]]);
+                if(result.docs[i].result[j][critere[k]]){
+                  print_result += result.docs[i].result[j][critere[k]] + "\t";
+                }
+                else{
+                  print_result += "\t"; 
+                }
+              }
                 
-                //     for(var prop in result.docs[i].result[obj]){
-                //         if(result.docs[i].result[obj].hasOwnProperty(prop)){
-                //             print_result += result.docs[i].result[obj][prop] + "\t";
-                //         }
-                //     }
-                //     print_result += "\n";
-                // }
+              print_result += "\n";
             }
           }
             // console.log('  Doc result: %s \t %s \t %s \t %s', result.docs[i].result[j].title, result.docs[i].result[j].id_announce, result.docs[i].result[j].price, result.docs[i].result[j].price_m2);

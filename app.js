@@ -43,7 +43,7 @@ var username = "8b74f433-f92c-49f3-b2c7-09ecb18e4a7f-bluemix";
 var password = "017d568e4f43f74e8bea82c54ccb800d696a6573bc2af17aa6584bea380ee1aa";
 var cloudant = Cloudant({account:username, password:password});
 
-var dbAchat = cloudant.db.use('vente_collect_test');
+var dbAchat = cloudant.db.use('vente_collect');
 var dbLocation = cloudant.db.use('location');
 var list_id_announce = [];
 var ville = cities[0];
