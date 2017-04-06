@@ -1,0 +1,6 @@
+
+> NodejsStarterApp@0.0.1 start C:\IBM\1.Mission\2016\Tooling\seloger
+> node app.js
+
+server starting on http://localhost:6011
+Terminate batch job (Y/N)? 

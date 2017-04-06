@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <title>NodeJS Starter Application</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="stylesheets/style.css">
+     <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.8/jquery.min.js"></script>
+  </head>
+
+  <body>
+    <table>
+      <tr>
+        <td style= "width:30%;">
+          <img class = "newappIcon" src="images/newapp-icon.png">
+        </td>
+        <td>
+          <h1 id="message">Hello World!</h1>
+          <script type="text/javascript">
+          console.log("here")
+
+        $.ajax({
+          type: 'GET',
+          headers: {
+            "My-First-Header":"first value",
+            "My-Second-Header":"second value"
+          }, 
+          url: "http://www.seloger.com/list.htm?tri=initial&idtypebien=2,1&pxmax=200000&idtt=2&cp=75",
+          data: {
+            
+          },
+          success: function( result ) {
+            console.log(result);
+            var json = [];  
+            var html = $.parseHTML( result );
+            
+            var list_info = $(result).find('article');
+            
+            list_info.each(function(){
+
+                var json_acc = { title: "", link:"", price:"", description:"", piece : "", chambre : "", metre_carre : ""};
+                var data = $(this);
+                console.log(data);
+                var title= data.children().first().children().first().attr('title');
+                var link= data.children().first().children().first().attr('href');
+                 var price = data.children().first().next().children().first().text();
+                 var description = data.children().first().next().next().text().trim();
+                 var param = data.children().first().next().next().next().text();
+                 console.log(title);
+                 json_acc.title = title;
+                 json_acc.link = link;
+                 json_acc.price = parseInt(price);
+                 json_acc.description = description;
+                       
+                var re = /(\d+) p/i;
+                var piece = param.match(re);
+                
+                var re = /(\d+) chb/i;
+                var chambre = param.match(re);
+                
+                var re = /(\d+) m²/i;
+                var metre = param.match(re);
+
+                console.log(price);
+                if(piece && piece[0]){
+                  // console.log("Piece:"+parseInt(piece[0]));
+                  json_acc.piece = parseInt(piece[0]);
+                }
+                else{
+                  console.log("Not found piece"); 
+                  json_acc.piece = 0;
+                }
+
+                if(chambre && chambre[0]){
+
+                  // console.log("Chambre:"+parseInt(chambre[0]));
+                  json_acc.chambre = parseInt(chambre[0]);
+                }
+                else{
+                  json_acc.chambre = 0; 
+                  // console.log("Not found chambre"); 
+                }
+
+                if(metre && metre[0]){
+                  json_acc.metre_carre = parseInt(metre[0]);
+                  // console.log("Metre carre:"+parseInt(metre[0]));
+                }
+                else{
+                  json_acc.metre_carre = 0;
+                  console.log("Not found metre carre"); 
+                }
+
+                json.push(json_acc)
+                console.log(json_acc)
+                });   
+          },
+          error: function(jqXHR, textStatus, errorThrown) {
+            console.log(jqXHR, textStatus, errorThrown);
+            request.abort();
+          }
+        });
+               
+
+          </script>
+          <p class='description'></p> Thanks for creating a <span class = "blue">NodeJS Starter Application</span>.
+        </td>
+      </tr>
+    </table>
+   
+  </body>
+
+</html>
