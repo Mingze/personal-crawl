@@ -30,8 +30,8 @@ var URL = require('url-parse');
 var fs = require('fs');
 var Cloudant = require('cloudant');
 
-//Paris 1-20, sceaux = 920071, creteil = 940028, Paris = 75, Palaiseau = 910477, la défense =929001, courbe voie = 920026, puteaux = 920062
-var cities = [75, 78, 92, 940028, 920026,929001, 920062, 920026,  75, 940028, 75, 940028, 75, 92, 91, 94, 75, 92, 940028, 940028, 75,910477, 940028, 920071, 940016, 920071]
+//Paris 1-20, 940081 = vitry-Sur-Seine, sceaux = 920071, creteil = 940028, Paris = 75, Palaiseau = 910477, la défense =929001, courbe voie = 920026, puteaux = 920062
+var cities = [940081, 75, 940076, 920007, 910471, 910477, 920024, 930070,75, 78, 92, 940028, 920026,929001, 920062, 920026,  75, 940028, 75, 940028, 75, 92, 91, 94, 75, 92, 940028, 940028, 75,910477, 940028, 920071, 940016, 920071]
 var location=1;
 var achat=2;
 var price_location=33;
@@ -44,10 +44,10 @@ var password = "017d568e4f43f74e8bea82c54ccb800d696a6573bc2af17aa6584bea380ee1aa
 var cloudant = Cloudant({account:username, password:password});
 
 var dbAchat = cloudant.db.use('vente_collect');
-var dbLocation = cloudant.db.use('location');
+var dbLocation = cloudant.db.use('location_collect');
 var list_id_announce = [];
 var ville = cities[0];
-var achat_url = 'http://www.seloger.com/list.htm?idtt='+achat+'&idtypebien=2,1&cp='+ville+'&tri=d_dt_crea';
+var achat_url = 'http://www.seloger.com/list.htm?idtt='+achat+'&idtypebien=2,1&ci='+ville+'&tri=d_dt_crea';
 var location_url = 'http://www.seloger.com/list.htm?&idtt=1&idtypebien=2,1&cp='+ville+'&tri=d_dt_crea';
 var parking = "idtypebien=3";
 var achat_parking_11 = 'http://www.seloger.com/list.htm?&idtt='+achat+'&'+parking+'&ci='+ville+'&tri=d_dt_crea';
@@ -88,41 +88,8 @@ function new_test(){
                 description=data.find($('.description')).text();
                 price=data.find($('.amount')).text();
                 link= data.children().first().children().first().next().children().first().children().first().attr('href');
-                console.log(param + "\n"+ description + "\n"+price+"\n"+title+"\n"+link);
-                // console.log(data.attr('data-listing-id'));
-                // console.log("annuity identified");
-                // var title= data.children().first().children().first().next().children().first().children().first().attr('title');
-                // var listing_infos= data.children().first().children().first().next();
-                // var param= data.children().first().children().first().children().first().children().last().text();
-                // console.log(title);
-
-                // //si c'est pas mode GOLD
-                // if(param == "")
-                // {
-                //     param=data.find($('.property_list')).text();
-                //     console.log(param)
-                // }
-                // else{
-                //     //si c'eset GOLD
-                //     console.log(param);    
-                // }
-                
-                
+                console.log(param + "\n"+ description + "\n"+price+"\n"+title+"\n"+link); 
             });
-             // $('.listing.life_annuity').filter(function(){
-             //      var data = $(this);
-             //      var param = data.prev();
-             //      console.log(param);  
-             // });
-            // $('.listing.life_annuity.gold').filter(function(){  
-            //     var data = $(this);
-            //     console.log(data.attr('data-listing-id'));
-            //     var title= data.children().first().children().first().next().children().first().children().first().attr('title');
-            //     var param= data.children().first().children().first().children().first().children().last().text();
-            //     console.log("GOLD");
-            //     console.log(title);
-            //     console.log(param);
-            // });
         }
     });
 }
@@ -155,7 +122,7 @@ function coucou(url, city,database,  callback){
                 link= data.children().first().children().first().next().children().first().children().first().attr('href');
                 // console.log(param + "\n"+ description + "\n"+price+"\n"+title+"\n"+link);
                 
-                var json_acc = { bouquet: false,  chambre : "", city: city, description:"", id_announce :"", link:"",  metre_carre : "", piece : "", price:"",  price_m2 : "", source : "seloger", timestamp:"", title: ""};
+                var json_acc = { bouquet: false,  chambre : "", city: city, city_name: "", description:"", id_announce :"", link:"",  metre_carre : "", piece : "", price:"",  price_m2 : "", source : "seloger", timestamp:"", title: ""};
                 // Let's store the data we filter into a variable so we can easily see what's going on.
                 // In examining the DOM we notice that the title rests within the first child element of the header tag. 
                 // Utilizing jQuery we can easily navigate and get the text by writing the following code:
@@ -168,6 +135,23 @@ function coucou(url, city,database,  callback){
                 var bouquet = false;
                
                 json_acc.title = title;
+                console.log(title);
+                //parse title
+                var re = /(\d+) ([a-zA-Zè]+) (\w+)/i;
+                
+
+
+                var city_title = title.match(re)[2];
+                json_acc.city_name = city_title;
+                
+                var re = /^(\w+) (\w+)/i;
+                
+                var nature_announce = title.match(re)[1];
+                var nature_bien = title.match(re)[2];
+                json_acc.nature_announce = nature_announce;
+                json_acc.nature_bien = nature_bien;
+
+
                 json_acc.link = link;
                 // console.log(price.indexOf("Bouquet"));
                 if(price.indexOf("Bouquet") != -1 ) 
@@ -179,7 +163,7 @@ function coucou(url, city,database,  callback){
                 var new_price = parseInt(price.replace("Bouquet","").replace(/\s/g,'').trim());
                 json_acc.price = new_price;
                 json_acc.description = description;
-                console.log(param);
+                // console.log(param);
                 var re = /(\d+) p/i;
                 var piece = param.match(re);
 
@@ -207,7 +191,7 @@ function coucou(url, city,database,  callback){
                 }
                 else{
                     json_acc.chambre = 0; 
-                console.log("Not found chambre"); 
+                    console.log("Not found chambre"); 
                 }
 
                 if(metre && metre[0]){
@@ -245,7 +229,7 @@ function coucou(url, city,database,  callback){
             });   
         // write in database
             if (json.length > 0){
-                console.log("New logement found!!" + json + " "+json !=[])
+                // console.log("New logement found!!" + json + " "+json !=[])
                 var time = new Date();
                 var insert_db = {city: city, timestamp:time.toISOString(), type:"vente", result:""};
                 insert_db.result = json;
@@ -255,7 +239,7 @@ function coucou(url, city,database,  callback){
                         return console.log('[dbAchatinsert] ', err.message);
                     }
                     else{ 
-                    console.log("sucessful write in DB")
+                    console.log("sucessful write in DB");
                     console.log("New crawled:"+loge_new_crawl+",added into database");
                     console.log("Already enregistred:"+loge_crawled+", won't be added into database");
                     callback(json);
@@ -266,7 +250,6 @@ function coucou(url, city,database,  callback){
             else
             {
                 console.log("Already enregistred:"+loge_crawled+", won't be added into database");
-                console.log("No new logement!")
                 callback(json);
             }       
         }
@@ -311,8 +294,8 @@ function getRandomInt(min, max) {
 
 // new_test();
 
-extract_database(dbAchat, achat_url);
-// extract_database(dbLocation, location_url);
+// extract_database(dbAchat, achat_url);
+extract_database(dbLocation, location_url);
 
 function extract_database(database, url){
     //parser database to get all id_announce
@@ -346,7 +329,7 @@ function extract_database(database, url){
 
                 function count(){
                      coucou(url+'&LISTING-LISTpg='+counter, ville, database, function(data){
-                        if(typeof(data) != 'number' && counter < 1000)
+                        if(typeof(data) != 'number' && counter < 1000  && counter < page +1)
                         {
                             // console.log("Page Number:"+counter);                              
                             //if callback json == [], stop crawling

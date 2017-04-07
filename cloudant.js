@@ -36,7 +36,7 @@ var password = "017d568e4f43f74e8bea82c54ccb800d696a6573bc2af17aa6584bea380ee1aa
 var cloudant = Cloudant({account:username, password:password});
 
 var dbAchat = cloudant.db.use('vente_collect');
-var dbLocation = cloudant.db.use('location');
+var dbLocation = cloudant.db.use('location_collect');
 
 function sortObject(o) {
     var sorted = {},
@@ -59,7 +59,7 @@ function sortObject(o) {
 function extract_database(database){
     var list_id_announce = [];
     var print_result = "bouquet\tchambre\tcity\tdescription\tid_announce\tlink\tmetre_carre\tpiece\tprice\tprice_m2\tsource\ttimestamp\ttitle\n";
-    var critere = ["bouquet","chambre","city","description","id_announce","link","metre_carre","piece","price","price_m2","roi", "source","timestamp","title"];
+    var critere = ["bouquet","chambre","city","description","id_announce","link","metre_carre","piece","price","price_m2","roi", "source","timestamp","title", "nature_announce", "nature_bien"];
 
     database.find({selector:{}}, function(er, result) {
       if (er) {
