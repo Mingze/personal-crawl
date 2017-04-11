@@ -58,8 +58,8 @@ function sortObject(o) {
 
 function extract_database(database){
     var list_id_announce = [];
-    var print_result = "bouquet\tchambre\tcity\tdescription\tid_announce\tlink\tmetre_carre\tpiece\tprice\tprice_m2\tsource\ttimestamp\ttitle\n";
-    var critere = ["bouquet","chambre","city","description","id_announce","link","metre_carre","piece","price","price_m2","roi", "source","timestamp","title", "nature_announce", "nature_bien"];
+    var print_result = "bouquet\tchambre\tcity\tdescription\tid_announce\tlink\tmetre_carre\tpiece\tprice\tprice_m2\troi\tsource\ttimestamp\ttitle\tnature_announce\tnature_bien\tcity_name\n";
+    var critere = ["bouquet","chambre","city","description","id_announce","link","metre_carre","piece","price","price_m2","roi", "source","timestamp","title", "nature_announce", "nature_bien","city_name"];
 
     database.find({selector:{}}, function(er, result) {
       if (er) {
@@ -68,7 +68,7 @@ function extract_database(database){
 
       console.log('Found %d documents', result.docs.length);
       for (var i = 0; i < result.docs.length; i++) {
-        console.log('  Doc id: %s', result.docs[i]._id);
+        // console.log('  Doc id: %s', result.docs[i]._id);
         // for (var j = 0; j < result.docs[i].result.length; j++){
           if(result.docs[i].result){
             for(var j = 0; j< result.docs[i].result.length; j++){
@@ -76,6 +76,10 @@ function extract_database(database){
               for(var k = 0; k < critere.length ; k++){
                 // console.log(result.docs[i].result[j][critere[k]]);
                 if(result.docs[i].result[j][critere[k]]){
+                  if(critere[k] == "city_name"  && result.docs[i].result[j][critere[k]].indexOf("Cr") != -1)
+                  {
+                    console.log(result.docs[i]._id);
+                  }
                   print_result += result.docs[i].result[j][critere[k]] + "\t";
                 }
                 else{
@@ -89,7 +93,7 @@ function extract_database(database){
             // console.log('  Doc result: %s \t %s \t %s \t %s', result.docs[i].result[j].title, result.docs[i].result[j].id_announce, result.docs[i].result[j].price, result.docs[i].result[j].price_m2);
             // list_id_announce.push(result.docs[i].result[j].id_announce);
         }
-         fs.writeFile(__dirname+'/Extract_cloudant11012017.txt', print_result, (err) => {
+         fs.writeFile(__dirname+'/Extract_Vente_07042017.txt', print_result, (err) => {
           if (err) throw err;
           console.log('Données exportées de Cloudant!');
         });  
@@ -201,6 +205,7 @@ function serach(database){
   //   });  
 
 
+// extract_database(dbLocation);
 extract_database(dbAchat);
 // serach(dbAchat);
 // get_page_crawl(achat_url, function(page){

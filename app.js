@@ -30,8 +30,11 @@ var URL = require('url-parse');
 var fs = require('fs');
 var Cloudant = require('cloudant');
 
-//Paris 1-20, 940081 = vitry-Sur-Seine, sceaux = 920071, creteil = 940028, Paris = 75, Palaiseau = 910477, la défense =929001, courbe voie = 920026, puteaux = 920062
-var cities = [940081, 75, 940076, 920007, 910471, 910477, 920024, 930070,75, 78, 92, 940028, 920026,929001, 920062, 920026,  75, 940028, 75, 940028, 75, 92, 91, 94, 75, 92, 940028, 940028, 75,910477, 940028, 920071, 940016, 920071]
+//Paris 1-20, 
+//94: Villejuif = 940076, Vitry-Sur-Seine = 940081, Creteil = 940028
+//91: Orsay = 910471, Sceaux = 920071, Palaiseau = 910477, 
+//92: la défense = 929001, courbevoie = 920026, puteaux = 920062
+var cities = [910471, 910477, 940028, 940076, 940081, 940081, 75, 940076, 920007, 910471, 910477, 920024, 930070,75, 78, 92, 940028, 920026,929001, 920062, 920026,  75, 940028, 75, 940028, 75, 92, 91, 94, 75, 92, 940028, 940028, 75,910477, 940028, 920071, 940016, 920071]
 var location=1;
 var achat=2;
 var price_location=33;
@@ -48,7 +51,7 @@ var dbLocation = cloudant.db.use('location_collect');
 var list_id_announce = [];
 var ville = cities[0];
 var achat_url = 'http://www.seloger.com/list.htm?idtt='+achat+'&idtypebien=2,1&ci='+ville+'&tri=d_dt_crea';
-var location_url = 'http://www.seloger.com/list.htm?&idtt=1&idtypebien=2,1&cp='+ville+'&tri=d_dt_crea';
+var location_url = 'http://www.seloger.com/list.htm?&idtt=1&idtypebien=2,1&ci='+ville+'&tri=d_dt_crea';
 var parking = "idtypebien=3";
 var achat_parking_11 = 'http://www.seloger.com/list.htm?&idtt='+achat+'&'+parking+'&ci='+ville+'&tri=d_dt_crea';
 var url = 'http://www.seloger.com/list.htm?idtt=2&idtypebien=2,1&cp=75&tri=d_dt_crea&naturebien=1,2,4';
@@ -103,7 +106,7 @@ function coucou(url, city,database,  callback){
     // var form = { username: 'Dong Antoine', password: '', opaque: 'someValue', logintype: '1'};
 
     request({url: url, headers: headers}, function(error, res_code, html){
-        console.log("Status code: " + res_code.statusCode);
+        // console.log("Status code: " + res_code.statusCode);
         var data = "";
         if(!error){
             var $ = cheerio.load(html);
@@ -137,13 +140,17 @@ function coucou(url, city,database,  callback){
                 json_acc.title = title;
                 console.log(title);
                 //parse title
-                var re = /(\d+) ([a-zA-Zè]+) (\w+)/i;
-                
+                var re = /(\d+) ([a-zA-Zè]+) ([\wa-zA-Zéèêëàâîïôöûü-]+)/i;
+               
 
-
-                var city_title = title.match(re)[2];
+                try{
+                var city_title = title.match(re)[3];
                 json_acc.city_name = city_title;
-                
+                }
+                catch(e){
+                    console.log("city-title not exist");
+                    json_acc.city_name = "";
+                }
                 var re = /^(\w+) (\w+)/i;
                 
                 var nature_announce = title.match(re)[1];
@@ -294,8 +301,8 @@ function getRandomInt(min, max) {
 
 // new_test();
 
-// extract_database(dbAchat, achat_url);
-extract_database(dbLocation, location_url);
+extract_database(dbAchat, achat_url);
+// extract_database(dbLocation, location_url);
 
 function extract_database(database, url){
     //parser database to get all id_announce
