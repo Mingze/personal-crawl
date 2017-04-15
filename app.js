@@ -34,12 +34,12 @@ var Cloudant = require('cloudant');
 //94: Villejuif = 940076, Vitry-Sur-Seine = 940081, Creteil = 940028
 //91: Orsay = 910471, Sceaux = 920071, Palaiseau = 910477, 
 //92: la défense = 929001, courbevoie = 920026, puteaux = 920062
-var cities = [910471, 910477, 940028, 940076, 940081, 940081, 75, 940076, 920007, 910471, 910477, 920024, 930070,75, 78, 92, 940028, 920026,929001, 920062, 920026,  75, 940028, 75, 940028, 75, 92, 91, 94, 75, 92, 940028, 940028, 75,910477, 940028, 920071, 940016, 920071]
+var cities = [940028, 910471, 910477, 940028, 940076, 940081, 940081, 75, 940076, 920007, 910471, 910477, 920024, 930070,75, 78, 92, 940028, 920026,929001, 920062, 920026,  75, 940028, 75, 940028, 75, 92, 91, 94, 75, 92, 940028, 940028, 75,910477, 940028, 920071, 940016, 920071]
 var location=1;
 var achat=2;
 var price_location=33;
 var resultat = [];
-
+var price_reference; 
 
 // database cloudant
 var username = "8b74f433-f92c-49f3-b2c7-09ecb18e4a7f-bluemix";
@@ -48,8 +48,11 @@ var cloudant = Cloudant({account:username, password:password});
 
 var dbAchat = cloudant.db.use('vente_collect');
 var dbLocation = cloudant.db.use('location_collect');
+var dbPrice = cloudant.db.use('price');
+
 var list_id_announce = [];
 var ville = cities[0];
+
 var achat_url = 'http://www.seloger.com/list.htm?idtt='+achat+'&idtypebien=2,1&ci='+ville+'&tri=d_dt_crea';
 var location_url = 'http://www.seloger.com/list.htm?&idtt=1&idtypebien=2,1&ci='+ville+'&tri=d_dt_crea';
 var parking = "idtypebien=3";
@@ -98,7 +101,8 @@ function new_test(){
 }
 
 function coucou(url, city,database,  callback){
-    console.log(url);
+    console.log(city);
+
     var headers = {   
             'User-Agent': 'AdsBot-Google (+http://www.google.com/adsbot.html)',
             'Content-Type' : 'application/x-www-form-urlencoded' 
@@ -206,6 +210,7 @@ function coucou(url, city,database,  callback){
                     json_acc.metre_carre = metre_carre;
                     // console.log(new_price / parseInt(metre[0]))
                     price_m2 = Math.round(new_price / parseInt(metre[0]))
+                    // price_location = city_title
                     var roi = Math.round( price_location * metre_carre * 12 / new_price * 10000) /100
 
                     json_acc.price_m2 = price_m2;
@@ -305,67 +310,93 @@ extract_database(dbAchat, achat_url);
 // extract_database(dbLocation, location_url);
 
 function extract_database(database, url){
-    //parser database to get all id_announce
-    database.find({selector:{}}, function(er, result) {
-        if (er) {
-            throw er;
-        }
 
-        console.log('Found %d documents', result.docs.length);
-        for (var i = 0; i < result.docs.length; i++) {
-            console.log('  Doc id: %s', result.docs[i]._id);
-            if(result.docs[i].result){
-                for (var j = 0; j < result.docs[i].result.length; j++){
-                    // console.log('  Doc result: %s', result.docs[i].result[j].id_announce);
-                    list_id_announce.push(result.docs[i].result[j].id_announce);
+    get_price(dbPrice, function(price){
+        //get the reference price
+        price_reference = price;
+
+        
+        //parser database to get all id_announce
+        database.find({selector:{}}, function(er, result) {
+            if (er) {
+                throw er;
+            }
+
+            console.log('Found %d documents', result.docs.length);
+
+            for (var i = 0; i < result.docs.length; i++) {
+                console.log('  Doc id: %s', result.docs[i]._id);
+                if(result.docs[i].result){
+                    for (var j = 0; j < result.docs[i].result.length; j++){
+                        // console.log('  Doc result: %s', result.docs[i].result[j].id_announce);
+                        list_id_announce.push(result.docs[i].result[j].id_announce);
+                    }
                 }
             }
-        }
+            // console.log(price_reference)
+            //récupérer les pages possibles à crawler
+            get_page_crawl(url, function(page){
+                if(page != -1)
+                {
+                    console.log("Page to crawl:"+page+", wait!");
+                    var time = new Date();
+                    time = time.toISOString();
+                    // console.log(list_id_announce);
+                    
+                    var myVar = setInterval(count, 10000);
+                    var counter = 1;        
 
-        //récupérer les pages possibles à crawler
-        get_page_crawl(url, function(page){
-            if(page != -1)
-            {
-                console.log("Page to crawl:"+page+", wait!");
-                var time = new Date();
-                time = time.toISOString();
-                // console.log(list_id_announce);
-                
-                var myVar = setInterval(count, 10000);
-                var counter = 1;        
-
-                function count(){
-                     coucou(url+'&LISTING-LISTpg='+counter, ville, database, function(data){
-                        if(typeof(data) != 'number' && counter < 1000  && counter < page +1)
-                        {
-                            // console.log("Page Number:"+counter);                              
-                            //if callback json == [], stop crawling
-                            if (data.length == 0)
+                    function count(){
+                         coucou(url+'&LISTING-LISTpg='+counter, ville, database, function(data){
+                            if(typeof(data) != 'number' && counter < 1000  && counter < page +1)
                             {
-                                console.log("NO More for this page "+counter+",crawler continue")
-                                // clearInterval(myVar);
-                                counter += 1;
+                                // console.log("Page Number:"+counter);                              
+                                //if callback json == [], stop crawling
+                                if (data.length == 0)
+                                {
+                                    console.log("NO More for this page "+counter+",crawler continue")
+                                    // clearInterval(myVar);
+                                    counter += 1;
+                                }
+                                else{
+                                    counter += 1;
+                                    console.log("Get "+data.length +" new logement!");
+                                }     
                             }
-                            else{
-                                counter += 1;
-                                console.log("Get "+data.length +" new logement!");
-                            }     
-                        }
-                        else  
-                        {
-                            console.log("Crawler stopped")
-                            clearInterval(myVar);
-                        }  
-                    });
+                            else  
+                            {
+                                console.log("Crawler stopped")
+                                clearInterval(myVar);
+                            }  
+                        });
 
+                    }
                 }
-            }
-            else{
-                console.log("Oops je ne peux plus crawler...Page d'erreur")
-            }
+                else{
+                    console.log("Oops je ne peux plus crawler...Page d'erreur")
+                }
+            });
         });
     });
 }
+
+function get_price (database, callback){
+    database.find({selector:{}}, function(er, result) {
+        console.log('Found %d documents', result.docs.length);
+        for (var i = 0; i < result.docs.length; i++) {
+            // console.log('  Doc id: %s', result.docs[i]._id);
+            if(result.docs[i].price_reference){
+
+                // console.log(result.docs[i].price_reference);
+                // return result.docs[i].price_reference;
+                callback(result.docs[i].price_reference);
+            }
+        }
+    });
+}
+
+// var price_reference = get_price(dbPrice);
+// console.log(get_price(dbPrice))
 
 
 function archive (data){
