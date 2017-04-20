@@ -20,7 +20,6 @@ app.use(express.static(__dirname + '/public'));
 
 // get the app environment from Cloud Foundry
 var appEnv = cfenv.getAppEnv();
-
 var express = require('express');
 var http = require('http');
 var app = express();
@@ -34,7 +33,7 @@ var Cloudant = require('cloudant');
 //94: Villejuif = 940076, Vitry-Sur-Seine = 940081, Creteil = 940028
 //91: Orsay = 910471, Sceaux = 920071, Palaiseau = 910477, 
 //92: la défense = 929001, courbevoie = 920026, puteaux = 920062
-var cities = [940028, 910471, 910477, 940028, 940076, 940081, 940081, 75, 940076, 920007, 910471, 910477, 920024, 930070,75, 78, 92, 940028, 920026,929001, 920062, 920026,  75, 940028, 75, 940028, 75, 92, 91, 94, 75, 92, 940028, 940028, 75,910477, 940028, 920071, 940016, 920071]
+var cities = [940028, 75,940028, 910471, 910477, 940028, 940076, 940081, 940081, 75, 940076, 920007, 910471, 910477, 920024, 930070,75, 78, 92, 940028, 920026,929001, 920062, 920026,  75, 940028, 75, 940028, 75, 92, 91, 94, 75, 92, 940028, 940028, 75,910477, 940028, 920071, 940016, 920071]
 var location=1;
 var achat=2;
 var price_location=33;
@@ -54,7 +53,7 @@ var list_id_announce = [];
 var ville = cities[0];
 
 var achat_url = 'http://www.seloger.com/list.htm?idtt='+achat+'&idtypebien=2,1&ci='+ville+'&tri=d_dt_crea';
-var location_url = 'http://www.seloger.com/list.htm?&idtt=1&idtypebien=2,1&ci='+ville+'&tri=d_dt_crea';
+var location_url = 'http://www.seloger.com/list.htm?&idtt=1&idtypebien=2,1&cp='+ville+'&tri=d_dt_crea';
 var parking = "idtypebien=3";
 var achat_parking_11 = 'http://www.seloger.com/list.htm?&idtt='+achat+'&'+parking+'&ci='+ville+'&tri=d_dt_crea';
 var url = 'http://www.seloger.com/list.htm?idtt=2&idtypebien=2,1&cp=75&tri=d_dt_crea&naturebien=1,2,4';
@@ -101,7 +100,7 @@ function new_test(){
 }
 
 function coucou(url, city,database,  callback){
-    console.log(city);
+    console.log(url);
 
     var headers = {   
             'User-Agent': 'AdsBot-Google (+http://www.google.com/adsbot.html)',
@@ -212,9 +211,10 @@ function coucou(url, city,database,  callback){
                     price_m2 = Math.round(new_price / parseInt(metre[0]))
                     // price_location = city_title
                     var roi = Math.round( price_location * metre_carre * 12 / new_price * 10000) /100
-
+                    var roi_colocation = Math.round( 500 * piece * 12 / new_price * 10000) /100
                     json_acc.price_m2 = price_m2;
                     json_acc.roi = roi;
+                    json_acc.roi_coloc = roi_colocation;
                     console.log("Metre carre:"+price_m2);
                 }
                 else{
@@ -311,9 +311,9 @@ extract_database(dbAchat, achat_url);
 
 function extract_database(database, url){
 
-    get_price(dbPrice, function(price){
+    // get_price(dbPrice, function(price){
         //get the reference price
-        price_reference = price;
+        // price_reference = price;
 
         
         //parser database to get all id_announce
@@ -377,18 +377,14 @@ function extract_database(database, url){
                 }
             });
         });
-    });
+    // });
 }
 
 function get_price (database, callback){
     database.find({selector:{}}, function(er, result) {
         console.log('Found %d documents', result.docs.length);
         for (var i = 0; i < result.docs.length; i++) {
-            // console.log('  Doc id: %s', result.docs[i]._id);
             if(result.docs[i].price_reference){
-
-                // console.log(result.docs[i].price_reference);
-                // return result.docs[i].price_reference;
                 callback(result.docs[i].price_reference);
             }
         }

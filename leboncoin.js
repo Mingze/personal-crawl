@@ -1,21 +1,27 @@
 var request = require('request');
 var cheerio = require('cheerio');
 var URL = require('url-parse');
+var iconv  = require('iconv-lite');
+var accent = require('./accentsTidy.js');
 
-var leboncoin_immo = "https://www.leboncoin.fr/ventes_immobilieres/offres/ile_de_france/occasions/?th=1&location=Paris&parrot=0";
+console.log(accent.accentsTidy("sé"));
+var leboncoin_immo = "https://www.leboncoin.fr/ventes_immobilieres/offres/ile_de_france/val_de_marne/?th=1&location=Cr%E9teil%2094000&parrot=0";
 crawl_main_page(leboncoin_immo);
 
 // 
-
-
 function crawl_child_page(url){
+	var requestOptions  = { encoding: null, url: url}
 	var re_id = /(\d+).ht/i;
 	var id_announce = url.match(re_id)[1];
-	
-	console.log(id_announce);
+	var property=[];
+	var counter = 0;
+	// console.log(id_announce);
 	//call for each announce get information
-	request(url, function(error1, response1, html1){
-
+	request(requestOptions, function(error1, response1, html1){
+		// html1.setEncoding('utf8');
+		var json_temp = {};
+		var html1 = iconv.decode(html1, 'iso-8859-1');
+		// console.log(html1)
 		if(error1) {
 	   	  console.log("Error: " + error1);
 	   	}
@@ -28,102 +34,56 @@ function crawl_child_page(url){
 
 			$('.adview_header').filter(function(){
 				title = $(this).find('h1').text().trim();
-				// console.log(title.trim());
+				json_temp.Title = title.trim();
 			});
+			var re = /(?:([01]?\d|2[0-3]):([0-5]?\d))$/i; 
+			var time_created = $("*[itemprop = 'availabilityStarts']").attr('content') +' '+ $("*[itemprop = 'availabilityStarts']").text().match(re)[0];
+			json_temp.Annonce_created = time_created;
+			var date = new Date();
+			date = date.toISOString();
+			json_temp.Time_crawled = date;
+			json_temp.link = url;
+			
+			$('h2').filter(function(){
+				var filter_h2 = $(this);
+				var property = accent.accentsTidy(filter_h2.find('.property').text().trim().toString().toLowerCase());
+				var value = filter_h2.find('.value').text().trim();	
+				// console.log(property);
+				//Si c'est le prix
+				if((property.indexOf('prix') != -1) || (property.indexOf('pieces') != -1) || (property.indexOf('surface') != -1)){
+					json_temp[property] = parseInt(value.replace(/\s/g,''));
+				}
 
-			$('span.property').filter(function(){
-				var result = $(this);
-				console.log(result.text().trim());
-				// properties.filter(function(){
-
-					
-				// 	console.log($('.span.property').text());
-				// });
-				// console.log($(this).find('span.property').text().trim()+'ss');
-				// console.log($(this).find('span.value').text().trim()+'dd');
-				// console.log(properties.find($('span').text()));
-				// $('p.line').filter(function(){
-				// 	var p_line = $(this);
-				// 	console.log(p_line.attr('content'));
-				// 	console.log($('span').hasClass("property"))
-				// 	console.log($('span.property').text());
-				// });
-
-				// console.log($('span').hasClass("property"))
-				// 
-					
-				// var raw_date = properties.find('p.line.line_pro').attr('content');
-
-
-				// var create_time_raw = properties.find('p.line.line_pro').text();
-				// var re = /à (\d+):(\d+)/i;
-				// var time = create_time_raw.match(re);
-				// var create_date = raw_date+'T'+time[1]+':'+time[2]+':'+'00.000Z';
-				// // console.log(create_date);
-				// // console.log(create_date+' '+time[1]+':'+time[2]);
-				
-
-				// var price = parseInt(properties.find('h2.item_price').attr('content'));
-
-				// // $('.clearfix').filter(function(){
-				// 	// var param = $(this);
-				// 	// console.log(param)	;
-
-				// console.log("URL:"+url);
-				// console.log("Property:"+properties.find('span.property').text().trim()+"lll");
-				// console.log("Valeur:"+properties.find('span.value').text().trim()+"lll");
-			});
-// 					var city_name = properties.find('div.line.line_city').find('span.value').text().split(' ')[0];
-// 					var code_postale = properties.find('div.line.line_city').find('span.value').text().trim().split(' ')[1];
-
-// 					var attribute1 = properties.find('div.line.line_city').next().find('span.property').text();
-// 					var type_bien = properties.find('div.line.line_city').next().find('span.value').text();
-
-// 					var piece = properties.find('div.line.line_city').next().next().find('span.value').text();
-// 					var surface = parseInt(properties.find('div.line.line_city').next().next().next().find('span.value').text());
-// 					var ges = properties.find('div.line.line_city').next().next().next().next().find('span.value').children().first().text().substring(0,1);
-// 					var energie = properties.find('div.line.line_city').next().next().next().next().next().find('span.value').children().first().text().substring(0,1);
-		
-// 					var description = properties.find('div.line.properties_description').find('p.value').text().trim();
-	
-
-// //Configure the JSON to be injected into Cloudant
-// 					var json_acc = { bouquet: false,  chambre : "", city: "", description:"", id_announce :"", link:"",  metre_carre : "", piece : "", price:"",  price_m2 : "", source : "", timestamp:"", title: ""};
-// 					json_acc.city = city_name;
-// 					json_acc.description = description;
-// 					json_acc.id_announce = id_announce;
-// 					json_acc.link = url;
-// 					json_acc.metre_carre = surface;
-// 					json_acc.price = price;
-// 					if(price && surface && surface != 0)
-// 		 			{
-// 		 				json_acc.price_m2 =  Math.round(price / surface);	
-// 		 			}
-// 		 			else{
-// 		 				console.log('surface is 0, not possible to calculate');
-// 		 			}
-// 					json_acc.source = "Leboncoin";
-// 					var crawl_time =new Date();
-// 					json_acc.timestamp = crawl_time.toISOString();
-// 					json_acc.title = title;
-// 					json_acc.create_time = create_date;
-// 					json_acc.code_postale = code_postale;
-// 					json_acc.ges = ges;
-// 					json_acc.energie = energie;
-// 					console.log(json_acc);
+				else if(property.indexOf('ville') != -1){
+					var city_postcode = accent.accentsTidy(value).split(' ');
+					json_temp.city_name = city_postcode[0];
+					json_temp.postcode = city_postcode[1];
 
 				}
-				});
 
-
+				else{
+					json_temp[property] = value;
+				}
+				
+				
+			});
 			
+			$('.properties_description').filter(function(){
+				var result = $(this);
+				json_temp.Description = result.find('.value').text().trim();
+			});	
+
+			console.log(json_temp);
+		}
+	});			
 }
 
 
 
 function crawl_main_page (url){
 	console.log("Visiting the main page: " + url);
-	request(url, function(error, response, html) {
+	var requestOptions  = { encoding: null, url: url}
+	request(requestOptions, function(error, response, html) {
 		if(error) {
 	   	  console.log("Error: " + error);
 	   	}
