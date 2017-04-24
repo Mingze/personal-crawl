@@ -59,7 +59,7 @@ function sortObject(o) {
 
 function extract_database(database){
     var list_id_announce = [];
-    var print_result = "bouquet\tchambre\tcity\tdescription\tid_announce\tlink\tmetre_carre\tpiece\tprice\tprice_m2\troi\tsource\ttimestamp\ttitle\tnature_announce\tnature_bien\tcity_name\n";
+    var print_result = "bouquet\tchambre\tcity\tdescription\tid_announce\tlink\tmetre_carre\tpiece\tprice\tprice_m2\troi\tsource\troi_coloc\ttimestamp\ttitle\tnature_announce\tnature_bien\tcity_name\n";
     var critere = ["bouquet","chambre","city","description","id_announce","link","metre_carre","piece","price","price_m2","roi", "roi_coloc", "source","timestamp","title", "nature_announce", "nature_bien","city_name"];
 
     database.find({selector:{}}, function(er, result) {

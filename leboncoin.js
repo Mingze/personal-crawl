@@ -2,13 +2,47 @@ var request = require('request');
 var cheerio = require('cheerio');
 var URL = require('url-parse');
 var iconv  = require('iconv-lite');
-var accent = require('./accentsTidy.js');
+var accent = require('./src/accentsTidy.js');
 
-console.log(accent.accentsTidy("sé"));
-var leboncoin_immo = "https://www.leboncoin.fr/ventes_immobilieres/offres/ile_de_france/val_de_marne/?th=1&location=Cr%E9teil%2094000&parrot=0";
-crawl_main_page(leboncoin_immo);
+var leboncoin_immo = "https://www.leboncoin.fr/ventes_immobilieres/offres/ile_de_france/val_de_marne/?o=1&location=Cr%E9teil%2094000";
+// var leboncoin_immo2 = "https://www.leboncoin.fr/ventes_immobilieres/offres/ile_de_france/val_de_marne/?o=2&location=Cr%E9teil%2094000";
+// crawl_main_page(leboncoin_immo);
+// var new_url = leboncoin_immo1.replace(/\?o=(\d+)/g, "\?o=3");
+// console.log("new: "+new_url);
+// get_page_to_crawl(new_url);
 
-// 
+get_page_to_crawl(leboncoin_immo);
+
+function get_page_to_crawl(url){
+	var requestOptions  = { encoding: null, url: url}
+	request(requestOptions, function(error1, response1, html1){
+		var html1 = iconv.decode(html1, 'iso-8859-1');	
+		if(error1) {
+	   	  console.log("Error: " + error1);
+	   	}
+	   	// Check status code (200 is HTTP OK)
+	   	// if(response.statusCode === 200) {
+   		else{
+   			var $ = cheerio.load(html1);
+   			var lastpage_link = $('#last').attr('href');
+   			var re = /\?o=(\d+)/i;
+   			var page = lastpage_link.match(re)[1];
+   			console.log("Get "+page+" pages to crawl. Starting..." );
+
+   			for(var i=1; i<=page; i++){
+   				var new_url = url.replace(/\?o=(\d+)/g,  "\?o="+i);
+   				// console.log(new_url);
+   				crawl_main_page(new_url);
+   				
+   			}	
+   			console.log("done");
+
+   		}
+
+
+	});
+}
+
 function crawl_child_page(url){
 	var requestOptions  = { encoding: null, url: url}
 	var re_id = /(\d+).ht/i;
@@ -36,6 +70,7 @@ function crawl_child_page(url){
 				title = $(this).find('h1').text().trim();
 				json_temp.Title = title.trim();
 			});
+			
 			var re = /(?:([01]?\d|2[0-3]):([0-5]?\d))$/i; 
 			var time_created = $("*[itemprop = 'availabilityStarts']").attr('content') +' '+ $("*[itemprop = 'availabilityStarts']").text().match(re)[0];
 			json_temp.Annonce_created = time_created;
@@ -58,7 +93,6 @@ function crawl_child_page(url){
 					var city_postcode = accent.accentsTidy(value).split(' ');
 					json_temp.city_name = city_postcode[0];
 					json_temp.postcode = city_postcode[1];
-
 				}
 
 				else{
@@ -73,7 +107,7 @@ function crawl_child_page(url){
 				json_temp.Description = result.find('.value').text().trim();
 			});	
 
-			console.log(json_temp);
+			// console.log(json_temp);
 		}
 	});			
 }
@@ -84,14 +118,17 @@ function crawl_main_page (url){
 	console.log("Visiting the main page: " + url);
 	var requestOptions  = { encoding: null, url: url}
 	request(requestOptions, function(error, response, html) {
+
 		if(error) {
 	   	  console.log("Error: " + error);
 	   	}
 	   	// Check status code (200 is HTTP OK)
 	   	// if(response.statusCode === 200) {
    		else{	
+   			// console.log("request answer");
 	     // Parse the document body
 	     	var $ = cheerio.load(html);
+	     	// console.log(html)
 	     	//get announce
 	 	 	$('.tabsContent.block-white.dontSwitch').find('li').filter(function(){
 	     	 	var data = $(this);
@@ -101,7 +138,9 @@ function crawl_main_page (url){
 	     		//Here Get all children announce.
 	     		var url_child =  data.find($('a')).attr('href').replace('//','https://');
 	     		//Function to get detailed information for each announce
+	     		// console.log("get child url"+ url_child);
 	     		crawl_child_page(url_child);
+
 	     		
 	     	});
      	}
