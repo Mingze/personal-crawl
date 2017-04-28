@@ -9,12 +9,16 @@ var leboncoin_immo = "https://www.leboncoin.fr/ventes_immobilieres/offres/ile_de
 // crawl_main_page(leboncoin_immo);
 // var new_url = leboncoin_immo1.replace(/\?o=(\d+)/g, "\?o=3");
 // console.log("new: "+new_url);
-// get_page_to_crawl(new_url);
-
 get_page_to_crawl(leboncoin_immo);
+// crawl_main_page(leboncoin_immo);
+// get_page_to_crawl(leboncoin_immo);
 
 function get_page_to_crawl(url){
-	var requestOptions  = { encoding: null, url: url}
+	var headers = {   
+            'User-Agent': 'AdsBot-Google (+http://www.google.com/adsbot.html)',
+            'Content-Type' : 'application/x-www-form-urlencoded' 
+    };
+	var requestOptions  = { encoding: null, url: url, headers: headers }; 
 	request(requestOptions, function(error1, response1, html1){
 		var html1 = iconv.decode(html1, 'iso-8859-1');	
 		if(error1) {
@@ -29,29 +33,42 @@ function get_page_to_crawl(url){
    			var page = lastpage_link.match(re)[1];
    			console.log("Get "+page+" pages to crawl. Starting..." );
 
-   			for(var i=1; i<=page; i++){
-   				var new_url = url.replace(/\?o=(\d+)/g,  "\?o="+i);
-   				// console.log(new_url);
-   				crawl_main_page(new_url);
-   				
-   			}	
-   			console.log("done");
 
-   		}
+   			
+	   			var delay = setInterval(delay_function, 15000);
+	            var counter = 1;        
 
-
+	            function delay_function(){
+	            	if(counter <= 2){
+		            	var new_url = url.replace(/\?o=(\d+)/g,  "\?o="+counter);
+		            	 console.log("Current url:"+ new_url);
+		            	 
+		                 crawl_main_page(new_url, function(res){
+		                    console.log(res);
+		                                
+		            	});
+		                 counter += 1;
+	             	}
+	             	else{
+	             		console.log("stop crawler");
+	             		clearInterval(delay);  
+	             	}
+	        	}	
+    	}
+   		
 	});
 }
 
-function crawl_child_page(url){
+function crawl_child_page(url, callback){
 	var requestOptions  = { encoding: null, url: url}
 	var re_id = /(\d+).ht/i;
 	var id_announce = url.match(re_id)[1];
 	var property=[];
 	var counter = 0;
-	// console.log(id_announce);
+	
 	//call for each announce get information
 	request(requestOptions, function(error1, response1, html1){
+		// console.log("in request child");
 		// html1.setEncoding('utf8');
 		var json_temp = {};
 		var html1 = iconv.decode(html1, 'iso-8859-1');
@@ -69,6 +86,7 @@ function crawl_child_page(url){
 			$('.adview_header').filter(function(){
 				title = $(this).find('h1').text().trim();
 				json_temp.Title = title.trim();
+				// console.log("title in child request"+title);
 			});
 			
 			var re = /(?:([01]?\d|2[0-3]):([0-5]?\d))$/i; 
@@ -98,38 +116,39 @@ function crawl_child_page(url){
 				else{
 					json_temp[property] = value;
 				}
-				
-				
 			});
 			
 			$('.properties_description').filter(function(){
 				var result = $(this);
 				json_temp.Description = result.find('.value').text().trim();
 			});	
-
-			// console.log(json_temp);
+			callback(json_temp);
+			
 		}
 	});			
 }
 
 
 
-function crawl_main_page (url){
-	console.log("Visiting the main page: " + url);
-	var requestOptions  = { encoding: null, url: url}
+function crawl_main_page (url, callback){
+	// console.log("Visiting the main page: " + url);
+	var headers = {   
+            'User-Agent': 'AdsBot-Google (+http://www.google.com/adsbot.html)',
+            'Content-Type' : 'application/x-www-form-urlencoded' 
+        };
+	var requestOptions  = { encoding: null, url: url, headers: headers}
+	var resultat = [];
 	request(requestOptions, function(error, response, html) {
-
 		if(error) {
 	   	  console.log("Error: " + error);
 	   	}
+
 	   	// Check status code (200 is HTTP OK)
 	   	// if(response.statusCode === 200) {
    		else{	
-   			// console.log("request answer");
 	     // Parse the document body
 	     	var $ = cheerio.load(html);
-	     	// console.log(html)
-	     	//get announce
+	     	
 	 	 	$('.tabsContent.block-white.dontSwitch').find('li').filter(function(){
 	     	 	var data = $(this);
 	     	 	// console.log(data);
@@ -138,12 +157,27 @@ function crawl_main_page (url){
 	     		//Here Get all children announce.
 	     		var url_child =  data.find($('a')).attr('href').replace('//','https://');
 	     		//Function to get detailed information for each announce
-	     		// console.log("get child url"+ url_child);
-	     		crawl_child_page(url_child);
-
 	     		
+ 		  		var delay = setInterval(delay_function, 5000);
+                var counter = 1;        
+
+                function delay_function(){
+                	 console.log("Main url:"+ url);
+                	 console.log("Children url:"+ url_child);
+                     crawl_child_page(url_child, function(res){
+                        console.log("Child crawled: ", res.Title);
+                        resultat.push(res);
+                        console.log(res);
+                        clearInterval(delay);              
+                	});
+            	}
+            	// callback(resultat);	
 	     	});
+	     	
+
      	}
+
+     	// 
 	});
 }
 

@@ -33,7 +33,7 @@ var Cloudant = require('cloudant');
 //94: Villejuif = 940076, Vitry-Sur-Seine = 940081, Creteil = 940028
 //91: Orsay = 910471, Sceaux = 920071, Palaiseau = 910477, 
 //92: la défense = 929001, courbevoie = 920026, puteaux = 920062
-var cities = [940028, 75,940028, 910471, 910477, 940028, 940076, 940081, 940081, 75, 940076, 920007, 910471, 910477, 920024, 930070,75, 78, 92, 940028, 920026,929001, 920062, 920026,  75, 940028, 75, 940028, 75, 92, 91, 94, 75, 92, 940028, 940028, 75,910477, 940028, 920071, 940016, 920071]
+var cities = [940028, 910471, 910477, 940028, 75, 910477, 940028, 940076, 940081, 940081, 75, 940076, 920007, 910471, 910477, 920024, 930070,75, 78, 92, 940028, 920026,929001, 920062, 920026,  75, 940028, 75, 940028, 75, 92, 91, 94, 75, 92, 940028, 940028, 75,910477, 940028, 920071, 940016, 920071]
 var location=1;
 var achat=2;
 var price_location=33;
@@ -74,8 +74,10 @@ var userAgent = ["Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 5.1; Trident/4.0
 
 function new_test(){
     var headers = {   
-            'User-Agent': 'AdsBot-Google (+http://www.google.com/adsbot.html)',
-            'Content-Type' : 'application/x-www-form-urlencoded' 
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.12; rv:45.0) Gecko/20100101 Firefox/45.0',
+            'Content-Type' : 'application/x-www-form-urlencoded',
+            'Referer' : 'http://www.w3.org/hypertext/DataSources/Overview.html'
+
         };
     // var form = { username: 'Dong Antoine', password: '', opaque: 'someValue', logintype: '1'};
 
