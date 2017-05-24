@@ -9,7 +9,7 @@ var configDB = require("./config/database.js");
 var fs = require('fs');
 var Cloudant = require('cloudant');
 
-console.log(configDB);
+// console.log(configDB);
 
 var username = configDB.username;
 var password = configDB.password;
@@ -18,7 +18,7 @@ var cloudant = Cloudant({account:username, password:password});
 var db_seloger_achat = cloudant.db.use(configDB.db_seloger_achat);
 var db_price = cloudant.db.use(configDB.db_price);
 // var db_seloger_location = cloudant.db.use(configDB.db_seloger_location);
-// var db_leboncoin_achat = cloudant.db.use(configDB.db_leboncoin_achat);
+var db_leboncoin_achat = cloudant.db.use(configDB.db_leboncoin_achat);
 // var db_leboncoin_location = cloudant.db.use(configDB.db_leboncoin_location);
 // var db_pap_achat = cloudant.db.use(configDB.db_pap_achat);
 // var db_pap_location = cloudant.db.use(configDB.db_pap_location);
@@ -26,7 +26,7 @@ var db_price = cloudant.db.use(configDB.db_price);
 function extract_price(){
     var list_id_announce = [];
     var print_result = "City\tpostcode\tappartment_price\tmaison_price\tlocation_price\n";
-    // var critere = ["bouquet","chambre","city","description","id_announce","link","metre_carre","piece","price","price_m2","roi", "source","timestamp","title", "nature_announce", "nature_bien","city_name"];
+   
 
     db_price.find({selector:{}}, function(er, result) {
       if (er) {
@@ -52,16 +52,25 @@ function extract_price(){
 }
 
 
-function extract_database(database){
+function extract_database(critere, database){
+    // console.log(database);
+    var print_result;
+    database = cloudant.db.use(database);
     var list_id_announce = [];
-    var print_result = "bouquet\tchambre\tcity\tdescription\tid_announce\tlink\tmetre_carre\tpiece\tprice\tprice_m2\troi\tsource\troi_coloc\ttimestamp\ttitle\tnature_announce\tnature_bien\tcity_name\n";
-    var critere = ["bouquet","chambre","city","description","id_announce","link","metre_carre","piece","price","price_m2","roi", "roi_coloc", "source","timestamp","title", "nature_announce", "nature_bien","city_name"];
-
+    
     database.find({selector:{}}, function(er, result) {
       if (er) {
         throw er;
       }
       console.log('Found %d documents', result.docs.length);
+      
+      for(var i=0; i<critere.length; i++){
+          // console.log(critere[i]);
+          print_result += critere[i]+"\t";
+          // console.log(print_result)
+      }
+      print_result += "\n";
+
       for (var i = 0; i < result.docs.length; i++) {
           if(result.docs[i].result){
             for(var j = 0; j< result.docs[i].result.length; j++){
@@ -75,9 +84,9 @@ function extract_database(database){
               }
               print_result += "\n";
             }
-          b}
+          }
         }
-         fs.writeFile(__dirname+'/Extract_Vente_18042017.txt', print_result, (err) => {
+         fs.writeFile(__dirname+'/Extract_'+database+'.txt', print_result, (err) => {
           if (err) throw err;
           console.log('Données exportées de Cloudant!');
         });  
@@ -86,4 +95,42 @@ function extract_database(database){
 
 }
 
+function get_id_announce(database, callback){
+  var database = cloudant.db.use(database);
+  var list_announce = [];
+  database.find({selector:{}}, function(er, result) {
+        if (er) {
+            throw er;
+        }
+         console.log('Found %d documents', result.docs.length);
+
+        for (var i = 0; i < result.docs.length; i++) {
+            console.log('  Doc id: %s', result.docs[i]._id);
+            if(result.docs[i].result){
+                for (var j = 0; j < result.docs[i].result.length; j++){
+                    // console.log('  Doc result: %s', result.docs[i].result[j].id_announce);
+                    list_announce.push(result.docs[i].result[j].id_announce);
+                }
+            }
+        }
+        callback(list_announce);
+      });
+}
+
+function insert_database(database, json){
+    var database = cloudant.db.use(database);
+    database.insert(json, function(err, body, header) {
+        if (err) {
+            return console.log('[dbAchatinsert] ', err.message);
+        }
+        else{ 
+         console.log("sucessful write in DB");
+        }
+    });
+}
+
+module.exports.db_leboncoin_achat = db_leboncoin_achat;
+module.exports.get_id_announce = get_id_announce;
 module.exports.extract_price = extract_price;
+module.exports.extract_database = extract_database;
+module.exports.insert_database = insert_database;

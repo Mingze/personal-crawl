@@ -1,24 +1,7 @@
-/*eslint-env node*/
-
-//------------------------------------------------------------------------------
-// node.js starter application for Bluemix
-//------------------------------------------------------------------------------
-
-// This application uses express as its web server
-// for more info, see: http://expressjs.com
 var express = require('express');
-
-// cfenv provides access to your Cloud Foundry environment
-// for more info, see: https://www.npmjs.com/package/cfenv
 var cfenv = require('cfenv');
-
-// create a new express server
 var app = express();
-
-// serve the files out of ./public as our main files
 app.use(express.static(__dirname + '/public'));
-
-// get the app environment from Cloud Foundry
 var appEnv = cfenv.getAppEnv();
 var express = require('express');
 var http = require('http');
@@ -33,7 +16,7 @@ var Cloudant = require('cloudant');
 //94: Villejuif = 940076, Vitry-Sur-Seine = 940081, Creteil = 940028
 //91: Orsay = 910471, Sceaux = 920071, Palaiseau = 910477, 
 //92: la défense = 929001, courbevoie = 920026, puteaux = 920062
-var cities = [940028, 910471, 910477, 940028, 75, 910477, 940028, 940076, 940081, 940081, 75, 940076, 920007, 910471, 910477, 920024, 930070,75, 78, 92, 940028, 920026,929001, 920062, 920026,  75, 940028, 75, 940028, 75, 92, 91, 94, 75, 92, 940028, 940028, 75,910477, 940028, 920071, 940016, 920071]
+var cities = [940028, 910471, 910477 , 910477, 940028, 75,  940028, 940076, 940081, 940081, 75, 940076, 920007, 910471, 910477, 920024, 930070,75, 78, 92, 940028, 920026,929001, 920062, 920026,  75, 940028, 75, 940028, 75, 92, 91, 94, 75, 92, 940028, 940028, 75,910477, 940028, 920071, 940016, 920071]
 var location=1;
 var achat=2;
 var price_location=33;
@@ -72,43 +55,13 @@ var userAgent = ["Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 5.1; Trident/4.0
 "Mozilla/5.0 (Windows NT 6.1; rv:22.0) Gecko/20130405 Firefox/22.0",
 "Mozilla/5.0 (Microsoft Windows NT 6.2.9200.0); rv:22.0) Gecko/20130405 Firefox/22.0"]
 
-function new_test(){
-    var headers = {   
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.12; rv:45.0) Gecko/20100101 Firefox/45.0',
-            'Content-Type' : 'application/x-www-form-urlencoded',
-            'Referer' : 'http://www.w3.org/hypertext/DataSources/Overview.html'
-
-        };
-    // var form = { username: 'Dong Antoine', password: '', opaque: 'someValue', logintype: '1'};
-
-    request({url: url, headers: headers}, function(error, res_code, html){
-        var data = "";
-        if(!error){
-            var $ = cheerio.load(html);
-            // console.log(html);
-            var title, release, rating, link=[], metre_carre =[], json =  [] ,loge_crawled = 0, loge_new_crawl = 0;
-            
-            $('.listing.life_annuity').filter(function(){
-                var data = $(this);
-                var title= data.children().first().children().first().next().children().first().children().first().attr('title');
-                param=data.find($('.property_list')).text();
-                description=data.find($('.description')).text();
-                price=data.find($('.amount')).text();
-                link= data.children().first().children().first().next().children().first().children().first().attr('href');
-                console.log(param + "\n"+ description + "\n"+price+"\n"+title+"\n"+link); 
-            });
-        }
-    });
-}
-
-function coucou(url, city,database,  callback){
+function coucou(url, city, database,  callback){
     console.log(url);
 
     var headers = {   
             'User-Agent': 'AdsBot-Google (+http://www.google.com/adsbot.html)',
             'Content-Type' : 'application/x-www-form-urlencoded' 
         };
-    // var form = { username: 'Dong Antoine', password: '', opaque: 'someValue', logintype: '1'};
 
     request({url: url, headers: headers}, function(error, res_code, html){
         // console.log("Status code: " + res_code.statusCode);
@@ -121,19 +74,17 @@ function coucou(url, city,database,  callback){
                 console.log("je me suis choppé!!!");
                 callback(-1);
             });
-            $('.listing.life_annuity').filter(function(){
+            $('.cartouche.life_annuity').filter(function(){
                 var data = $(this);
-                var title= data.children().first().children().first().next().children().first().children().first().attr('title');
-                param=data.find($('.property_list')).text();
+                var title= data.find('.listing_photo').attr('alt');
+
+                param=data.find('.property_list').text();
                 description=data.find($('.description')).text().replace(/\s/g," ").trim();
-                price=data.find($('.amount')).text();
+                price=data.find($('.price')).text();
                 link= data.children().first().children().first().next().children().first().children().first().attr('href');
                 // console.log(param + "\n"+ description + "\n"+price+"\n"+title+"\n"+link);
                 
                 var json_acc = { bouquet: false,  chambre : "", city: city, city_name: "", description:"", id_announce :"", link:"",  metre_carre : "", piece : "", price:"",  price_m2 : "", source : "seloger", timestamp:"", title: ""};
-                // Let's store the data we filter into a variable so we can easily see what's going on.
-                // In examining the DOM we notice that the title rests within the first child element of the header tag. 
-                // Utilizing jQuery we can easily navigate and get the text by writing the following code:
                 
                 var re =/\/(\d+).htm/i;
                 var id_loge = link.match(re)[1];
@@ -151,11 +102,7 @@ function coucou(url, city,database,  callback){
                 try{
                 var city_title = title.match(re)[3];
                 json_acc.city_name = city_title;
-                }
-                catch(e){
-                    console.log("city-title not exist");
-                    json_acc.city_name = "";
-                }
+
                 var re = /^(\w+) (\w+)/i;
                 
                 var nature_announce = title.match(re)[1];
@@ -164,6 +111,12 @@ function coucou(url, city,database,  callback){
                 json_acc.nature_bien = nature_bien;
 
 
+                }
+                catch(e){
+                    console.log("city-title not exist");
+                    json_acc.city_name = "";
+                }
+             
                 json_acc.link = link;
                 // console.log(price.indexOf("Bouquet"));
                 if(price.indexOf("Bouquet") != -1 ) 
@@ -175,7 +128,7 @@ function coucou(url, city,database,  callback){
                 var new_price = parseInt(price.replace("Bouquet","").replace(/\s/g,'').trim());
                 json_acc.price = new_price;
                 json_acc.description = description;
-                // console.log(param);
+                console.log(param);
                 var re = /(\d+) p/i;
                 var piece = param.match(re);
 
@@ -187,9 +140,10 @@ function coucou(url, city,database,  callback){
                 // console.log(metre)
 
                 if(piece && piece[0] ){
-                    console.log("piece:"+piece);
+                    
                     piece = parseInt(piece[0]);
                     json_acc.piece = piece;
+                    console.log("Piece:"+piece);
                 }
                 else{
                     console.log("Not found piece"); 
@@ -208,6 +162,7 @@ function coucou(url, city,database,  callback){
 
                 if(metre && metre[0]){
                     metre_carre = parseInt(metre[0].replace(',','.'))
+                    console.log("metre_carre"+ metre_carre);
                     json_acc.metre_carre = metre_carre;
                     // console.log(new_price / parseInt(metre[0]))
                     price_m2 = Math.round(new_price / parseInt(metre[0]))
@@ -217,7 +172,7 @@ function coucou(url, city,database,  callback){
                     json_acc.price_m2 = price_m2;
                     json_acc.roi = roi;
                     json_acc.roi_coloc = roi_colocation;
-                    console.log("Metre carre:"+price_m2);
+                    console.log("Price Metre carre:"+price_m2);
                 }
                 else{
                     price_m2 = new_price;
@@ -253,13 +208,12 @@ function coucou(url, city,database,  callback){
                         return console.log('[dbAchatinsert] ', err.message);
                     }
                     else{ 
-                    console.log("sucessful write in DB");
-                    console.log("New crawled:"+loge_new_crawl+",added into database");
-                    console.log("Already enregistred:"+loge_crawled+", won't be added into database");
-                    callback(json);
+                        console.log("sucessful write in DB");
+                        console.log("New crawled:"+loge_new_crawl+",added into database");
+                        console.log("Already enregistred:"+loge_crawled+", won't be added into database");
+                        callback(json);
                     }
                 });
-                
             }
             else
             {
@@ -275,7 +229,7 @@ function coucou(url, city,database,  callback){
     });
 }
 
-function get_page_crawl(url, callback){
+function getSelogerPage(url, callback){
     var headers = {             
             'User-Agent': 'Googlebot/2.1 (+http://www.google.com/bot.html)',
             'Content-Type' : 'application/x-www-form-urlencoded' 
@@ -294,8 +248,6 @@ function get_page_crawl(url, callback){
             $('.pagination_result_number').filter(function(){  
                 var data = $(this);
                 page = parseInt(data.text().match(/\/ \d+/)[0].split('/')[1]);
-                
-                // console.log(page);
             });
         }
         callback(parseInt(page));
@@ -306,25 +258,16 @@ function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-// new_test();
-
 extract_database(dbAchat, achat_url);
 // extract_database(dbLocation, location_url);
 
 function extract_database(database, url){
-
-    // get_price(dbPrice, function(price){
-        //get the reference price
-        // price_reference = price;
-
-        
         //parser database to get all id_announce
         database.find({selector:{}}, function(er, result) {
             if (er) {
                 throw er;
             }
-
-            console.log('Found %d documents', result.docs.length);
+             console.log('Found %d documents', result.docs.length);
 
             for (var i = 0; i < result.docs.length; i++) {
                 console.log('  Doc id: %s', result.docs[i]._id);
@@ -335,16 +278,13 @@ function extract_database(database, url){
                     }
                 }
             }
-            // console.log(price_reference)
             //récupérer les pages possibles à crawler
-            get_page_crawl(url, function(page){
+            getSelogerPage(url, function(page){
                 if(page != -1)
                 {
                     console.log("Page to crawl:"+page+", wait!");
                     var time = new Date();
-                    time = time.toISOString();
-                    // console.log(list_id_announce);
-                    
+                    time = time.toISOString();                    
                     var myVar = setInterval(count, 10000);
                     var counter = 1;        
 
@@ -379,29 +319,6 @@ function extract_database(database, url){
                 }
             });
         });
-    // });
-}
-
-function get_price (database, callback){
-    database.find({selector:{}}, function(er, result) {
-        console.log('Found %d documents', result.docs.length);
-        for (var i = 0; i < result.docs.length; i++) {
-            if(result.docs[i].price_reference){
-                callback(result.docs[i].price_reference);
-            }
-        }
-    });
-}
-
-// var price_reference = get_price(dbPrice);
-// console.log(get_price(dbPrice))
-
-
-function archive (data){
-    fs.writeFile(__dirname+'/vente'+ville+'.txt', data, (err) => {
-      if (err) throw err;
-      console.log('It\'s saved!');
-    });    
 }
 
 app.listen(appEnv.port, '0.0.0.0', function() {

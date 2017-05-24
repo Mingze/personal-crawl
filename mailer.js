@@ -2,7 +2,7 @@
 const nodemailer = require('nodemailer');
 const Email_config = require("./config/mailer_config.js");
 
-console.log(Email_config);
+// console.log(Email_config);
 var username = Email_config.username,
  password = Email_config.password,
  receivers = Email_config.receivers,
