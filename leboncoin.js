@@ -20,7 +20,7 @@ var configDB = require("./config/database.js");
 //Get page, entry point leboncoin, store into db
 
 
-function leboncoinCRAWLER(url, list_announce, alerte){
+function leboncoinCRAWLER(url, list_announce, alerte, callback){
 	var headers = {   
             'User-Agent': 'AdsBot-Google (+http://www.google.com/adsbot.html)',
             'Content-Type' : 'application/x-www-form-urlencoded' 
@@ -49,9 +49,11 @@ function leboncoinCRAWLER(url, list_announce, alerte){
 	                	if(res == "-1"){
 	                		console.log("Stop crawler since no more new announces");
              				clearInterval(delay);  
+
+             				callback(-1);
 	                	}
 	                	else{
-	                		console.log(res);
+	                		// console.log(res);
 		                	var date = new Date();
 							date = date.toISOString();
 							
@@ -60,6 +62,7 @@ function leboncoinCRAWLER(url, list_announce, alerte){
 			                db.insert_database(configDB.db_leboncoin_achat, insert_db, function(res){
 			            		console.log("result insertion:"+res);
 			            	});
+			            	callback(1);
 		            	}
 	            	});
 	                counter += 1;
@@ -67,6 +70,7 @@ function leboncoinCRAWLER(url, list_announce, alerte){
              	else{
              		console.log("stop crawler");
              		clearInterval(delay);  
+             		callback(0)
              	}
         	}	
     	}
@@ -206,9 +210,16 @@ function crawl_main_page (url, list_announce, alerte, callback){
    		else{	
 	     // Parse the document body
 	     	var $ = cheerio.load(html);
+
+	     	//number of child page to crawl
 	     	var nbrLi = $('.tabsContent.block-white.dontSwitch').find('li').length
-	     	var compteur = 1;
+
+	     	//counter for stop the crawler
+	     	var compteur = 0;
+	     	// counter for check annouce already crawled
 			var counter_crawled = 0;
+			// counter for newcrawled announce 
+			//counter_newcrawl+counter_crawled = nbreLi
 			var counter_newcrawl = 0;
 
 	 	 	$('.tabsContent.block-white.dontSwitch').find('li').filter(function(){
@@ -226,48 +237,52 @@ function crawl_main_page (url, list_announce, alerte, callback){
 				// if the announce hasn't been crawled
 
 				if(list_announce.indexOf(id_announce_current) == -1){
-					counter_newcrawl += 1;
-	     			// console.log("this announce hasn't been crawled: "+id_announce_current);
+					
+					counter_newcrawl++;
+	     			console.log("this announce hasn't been crawled: "+id_announce_current);
 	 		  		var delay = setInterval(delay_function, 5000);
 	                function delay_function(){
 	             
 	                    crawl_child_page(url_child, alerte, function(res){
 	                     	resultat.push(res);
-	                     	console.log("compteur:"+compteur+", nbre to reach:"+nbrLi);
+	                     	compteur++;
+	                     	// console.log("compteur:"+compteur+", nbre to reach:"+nbrLi);
 	                        clearInterval(delay); 
-	                     	compteur ++;
 	                     	
-	           //           	if(compteur == nbrLi){
-	           //           		console.log("counter_crawled:"+counter_crawled+", counter_newcrawl:"+counter_newcrawl);
-	           //           		if(counter_crawled == nbrLi || counter_newcrawl ==0){
-						     	// 	console.log("Crawler should stop, no new announce crawled / all announce crawled")
-						     	// 	callback("-1");
-						     	// }
-						     	// else{
-	           //           			callback(resultat);
-	           //           		}
-	           //           	}
+	                     	
+	       					if(compteur == nbrLi){
+		                 		// console.log("counter_crawled:"+counter_crawled+", counter_newcrawl:"+counter_newcrawl);
+		                 		if(counter_crawled == nbrLi || counter_newcrawl ==0){
+						     		console.log("Crawler should stop, no new announce crawled / all announce crawled")
+						     		callback("-1");
+						     	}
+						     	else{
+						     		// console.log(resultats)
+		                 			callback(resultat);
+		                 		}
+		                 	}
                      	});
                  	}
                  }              
             	else{
         			// console.log("This announce has been crawled: "+id_announce_current);
-            		counter_crawled += 1;
-            		compteur ++;
-
-            	}
-
-            	if(compteur == nbrLi){
-                 		console.log("counter_crawled:"+counter_crawled+", counter_newcrawl:"+counter_newcrawl);
+            		counter_crawled++;
+            		compteur++;
+            		if(compteur == nbrLi){
+                 		// console.log("counter_crawled:"+counter_crawled+", counter_newcrawl:"+counter_newcrawl);
                  		if(counter_crawled == nbrLi || counter_newcrawl ==0){
 				     		console.log("Crawler should stop, no new announce crawled / all announce crawled")
 				     		callback("-1");
 				     	}
 				     	else{
-				     		console.log(resultat)
+				     		// console.log(resultats)
                  			callback(resultat);
                  		}
                  	}
+
+            	}
+            	// console.log("nbrLi:"+nbrLi + ", compteur:"+compteur)
+            
 	     	});
 
 	     	

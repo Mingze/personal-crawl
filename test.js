@@ -2,6 +2,7 @@ var request = require('request');
 var cheerio = require('cheerio');
 var URL = require('url-parse');
 var iconv  = require('iconv-lite');
+var scraper = require('learn');
 
 var no_pro = "https://www.leboncoin.fr/ventes_immobilieres/1117221663.htm?ca=12_s";
 // var url = 'https://www.leboncoin.fr/ventes_immobilieres/1107597239.htm?ca=12_s';
@@ -27,3 +28,18 @@ request(requestOptions, function(error1, response1, html1){
     }
     
 });
+
+
+scraper.imgScrape2(url)
+  .then((data)) => {
+    console.log('data from scraper received ')
+    fs.writeFile(path, JSON.stringify(data), (error) => {
+      if(error){
+        console.log(error);
+      }
+      console.log('Successfully wrote to '+path);
+    }
+  }
+  .catch((error) => {
+    console.log("error scrapping data");
+  })

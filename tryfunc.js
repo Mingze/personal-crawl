@@ -23,11 +23,26 @@ var leboncoin_immo = "https://www.leboncoin.fr/ventes_immobilieres/offres/ile_de
 // var critere = ["bouquet","chambre","city","description","id_announce","link","metre_carre","piece","price","price_m2","roi", "roi_coloc", "source","timestamp","title", "nature_announce", "nature_bien","city_name"];
 // db.extract_database(critere, configDB.db_seloger_achat);
 
-db.get_id_announce(configDB.db_leboncoin_achat, function(list_announce){
-	console.log(list_announce);
-	crawlLeboncoin.leboncoinCRAWLER(leboncoin_immo, list_announce, false);
+var delay = setInterval(run_crawl_boncoin, 900000);
 
-});
+function run_crawl_boncoin(){
+	db.get_id_announce(configDB.db_leboncoin_achat, function(list_announce){
+		console.log(list_announce);
+		crawlLeboncoin.leboncoinCRAWLER(leboncoin_immo, list_announce, true, function(resCode){
+			if(resCode == 1){
+				console.log("crawler continue");
+			}
+			else if(resCode == 0){
+				console.log("Crawler finished");
+			}
+			else if(resCode == -1){
+				console.log("Already crawled, No more to crawl");
+			}
+		});
+
+	});
+}
+
 var critere_boncoin = ["Source", "Annonce_created", "Time_crawled","city_name","postcode","type de bien","ges", "classe energie","link", "id_announce","Title","pieces","surface", "prix", "price_m2", "Agence","roi","roi_colocation","Description"];
 // db.extract_database(critere_boncoin, configDB.db_leboncoin_achat);
 // db.extract_database(configDB.db_leboncoin_achat);
