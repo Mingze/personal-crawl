@@ -51,6 +51,27 @@ function extract_price(){
     });       
 }
 
+function modif_database(database){
+  database = cloudant.db.use(database); 
+  database.find({selector:{}}, function(er, result) {
+      if (er) {
+        throw er;
+      }
+      console.log('Found %d documents', result.docs.length);
+
+      for (var i = 0; i < result.docs.length; i++) {
+          if(result.docs[i].result){
+
+            for(var j = 0; j< result.docs[i].result.length; j++){
+                if(result.docs[i].result[j].prix){
+                  var price = result.docs[i].result[j].price;
+                  console.log(price);
+                }
+            }
+          }
+        }      
+    });   
+}
 
 function extract_database(critere, database){
     // console.log(database);
@@ -134,3 +155,4 @@ module.exports.get_id_announce = get_id_announce;
 module.exports.extract_price = extract_price;
 module.exports.extract_database = extract_database;
 module.exports.insert_database = insert_database;
+module.exports.modif_database = modif_database;
