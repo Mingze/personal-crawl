@@ -24,9 +24,9 @@ var leboncoin_immo = "https://www.leboncoin.fr/ventes_immobilieres/offres/ile_de
 var critere = ["bouquet","chambre","city","description","id_announce","link","metre_carre","piece","price","price_m2","roi", "roi_coloc", "source","timestamp","title", "nature_announce", "nature_bien","city_name"];
 var critere_boncoin = ["Source", "Annonce_created", "Time_crawled","city_name","postcode","type de bien","ges", "classe energie","link", "id_announce","Title","pieces","surface", "prix", "price_m2", "Agence","roi","roi_colocation","Description"];
 
-// db.extract_database(critere_boncoin, configDB.db_leboncoin_achat);
-// db.extract_database(critere, configDB.db_seloger_achat);
-db.modif_database(configDB.db_leboncoin_achat);
+// db.extract_database(critere_boncoin, configDB.db_leboncoin_achat, "leboncoin");
+db.extract_database(critere, configDB.db_seloger_achat, "seloger");
+// db.modif_database(configDB.db_seloger_achat);
 // var delay = setInterval(run_crawl_boncoin, 9000);
 // run_crawl_boncoin();
 // full_crawl_boncoin();

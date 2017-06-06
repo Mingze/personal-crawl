@@ -8,6 +8,7 @@
 var configDB = require("./config/database.js");
 var fs = require('fs');
 var Cloudant = require('cloudant');
+var src_roi = require('./roi.js');
 
 // console.log(configDB);
 
@@ -63,17 +64,34 @@ function modif_database(database){
           if(result.docs[i].result){
 
             for(var j = 0; j< result.docs[i].result.length; j++){
-                if(result.docs[i].result[j].prix){
+              
+                if(result.docs[i].result[j].price && result.docs[i].result[j].metre_carre && result.docs[i].result[j].piece){
+                  
                   var price = result.docs[i].result[j].price;
-                  console.log(price);
+                  var surface = result.docs[i].result[j].metre_carre;
+                  var pieces = result.docs[i].result[j].piece;
+                  
+                  result.docs[i].result[j].roi = src_roi.roi(surface, 33, price);
+                  result.docs[i].result[j].roi_colocation = src_roi.roi_colocation(pieces, 500, price);
+                  
                 }
             }
-          }
+          
+           database.insert(result.docs[i], function(err, body, header) {
+            if (err) {
+                return console.log('[dbAchatinsert] ', err.message);
+            }
+            else{ 
+             console.log("sucessful write in DB");
+            }
+          });
         }      
-    });   
+        
+    }
+  });   
 }
 
-function extract_database(critere, database){
+function extract_database(critere, database, name){
     // console.log(database);
     var print_result;
     database = cloudant.db.use(database);
@@ -107,7 +125,7 @@ function extract_database(critere, database){
             }
           }
         }
-         fs.writeFile(__dirname+'/Extract_'+database+'.txt', print_result, (err) => {
+         fs.writeFile(__dirname+'/Extract_'+name+'.txt', print_result, (err) => {
           if (err) throw err;
           console.log('Données exportées de Cloudant!');
         });  
