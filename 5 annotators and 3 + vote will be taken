@@ -1,0 +1,49 @@
+5 annotators and 3 + vote will be taken
+disgust we should have this emotion. 
+82290289600015S90ZWr54lOuv79Af7U8xpw==
+
+
+reprise - get all context and load all intents/entity showed/detected.
+each conversation, all intents/entity detected. 
+For each low -> match the enrollment with the reference. Find out the similarity of the current parcours with reference parcours. 
+
+
+
+Trigger : 	Instead of having low: %80 of clients talks about intent1 in your case (Choice), 50 % of clients talks about intent2, what do you mean? 
+			Instead of having a disambiguation: twice disambiguation, >80% of clients (show)
+
+Statistique Workspace model:
+Imagine A...G is the nodes in Workspaces
+ABCDEFG
+AHBDEFG
+ABC
+ABCEDF
+ABCH
+ABCI
+ABCJ
+
+Statistique aggregated Log model :
+Imagine A...G is the nodes in aggregated logs
+ABCDEFG
+AHBDEFG
+ABC
+ABCEDF
+ABCH
+ABCI
+ABCJ
+
+Calcult indicators:
+Indicator1 in Workspace model:
+if A-> 75% H and 25% B 
+if AB -> 100% C
+if ABC -> 
+
+Indicator2 in aggregated logs:
+
+
+if (two indicators > high and two intents are the same): then show intent as the answer. 
+else if (one of the indicators > high): show the answer
+else if (two indicators > medium and two intents are the same): then show the intent as a option.
+else if (two indicators > medium and two intents are different:) then show the intents as option.
+else if (one indicator) ...
+else (indicator 1&2 < low): I don't understand.
