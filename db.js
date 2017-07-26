@@ -136,36 +136,108 @@ function extract_database(critere, database, name){
 
 function get_id_announce(database, callback){
   var database = cloudant.db.use(database);
-  var list_announce = [];
+  var reference = {};
   database.find({selector:{}}, function(er, result) {
         if (er) {
             throw er;
         }
-         console.log('Found %d documents', result.docs.length);
-
+        console.log('Found %d documents', result.docs.length);
         for (var i = 0; i < result.docs.length; i++) {
-            console.log('  Doc id: %s', result.docs[i]._id);
+            console.log('Doc id: %s', result.docs[i]._id);
             if(result.docs[i].result){
+                var obj = {}; 
+                var list_announce = [];
                 for (var j = 0; j < result.docs[i].result.length; j++){
-                    // console.log('  Doc result: %s', result.docs[i].result[j].id_announce);
-                    list_announce.push(result.docs[i].result[j].id_announce);
+                    var id = result.docs[i].result[j].id_announce;
+                    var price  = result.docs[i].result[j].prix ;
+                    // var obj = {};
+                    obj[id] = price; 
+                    // list_announce.push(obj1);
+                    if(j == result.docs[i].result.length-1){
+                      console.log("in the end")
+                      reference[result.docs[i]._id] = obj;
+                    }
                 }
             }
         }
-        callback(list_announce);
-      });
+      callback(reference);
+  });
 }
 
+//Insert into a data base the json
 function insert_database(database, json){
-    var database = cloudant.db.use(database);
-    database.insert(json, function(err, body, header) {
+
+    var database1 = cloudant.db.use(database);
+
+    database1.insert(json, function(err, body, header) {
         if (err) {
             return console.log('[dbAchatinsert] ', err.message);
         }
         else{ 
-         console.log("sucessful write in DB");
+         console.log("sucessful inserted in DB");
         }
     });
+}
+//Detele a data base the json
+function delete_database(database, list_doc_delete){
+    var database1 = cloudant.db.use(database);
+    Object.keys(list_doc_delete).forEach(function (key){
+      var docId = key;
+      var docRev = list_doc_delete[key];
+      database1.destroy(docId, docRev, function(err, body, header) {
+        if (err) {
+            return console.log('[dbAchatinsert] ', err.message);
+        }
+        else{ 
+         console.log("Successfully deleted doc with docId: "+docId);
+        }
+      });
+    });
+}
+
+
+//Aggregate all the announces by a groupe of 10, delete docs aggregated
+function aggregation_db(database){
+  
+    var database1 = cloudant.db.use(database);
+     database1.find({selector:{}}, function(er, result) {
+        if (er) {
+          throw er;
+        }
+        //For each 10 documents, do an aggregation
+        var counter = 0;
+        var list_result_tmp =[];
+        //List of doc to delete
+        var list_doc_delete ={};
+
+        for (var i = 0; i < result.docs.length; i++) {
+
+          //Reach the end point, delete docs aggregated, insert the final doc
+          if(i == result.docs.length-1){
+            delete_database(database, list_doc_delete);
+            result.docs[i].result = list_result_tmp;
+            insert_database(database, result.docs[i]);
+          }
+
+
+          if(result.docs[i].result && result.docs[i].result.length <10){
+            console.log("for" +result.docs[i]._id+", has"+result.docs[i].result.length +" announces")
+            if(counter != 10){
+              //Concatene the 10 results, delete the current doc
+              list_result_tmp = list_result_tmp.concat(result.docs[i].result); 
+              list_doc_delete[result.docs[i]._id] = result.docs[i]._rev;
+              counter ++;
+            }
+            else{
+              // Do the aggregation with list_result_tmp
+              result.docs[i].result = list_result_tmp;
+              insert_database(database, result.docs[i]);
+              counter = 0; 
+              list_result_tmp =[];
+            }
+          }
+        }
+      });
 }
 
 module.exports.db_leboncoin_achat = db_leboncoin_achat;
@@ -174,3 +246,5 @@ module.exports.extract_price = extract_price;
 module.exports.extract_database = extract_database;
 module.exports.insert_database = insert_database;
 module.exports.modif_database = modif_database;
+module.exports.aggregation_db = aggregation_db;
+module.exports.delete_database = delete_database;
