@@ -50,7 +50,7 @@ function leboncoinCRAWLER(url, list_announce, alerte, callback){
 	                		console.log("Stop crawler since no more new announces");
              				clearInterval(delay);  
 
-             				callback(-1);
+             				callback(1);
 	                	}
 	                	else{
 	                		// console.log(res);
@@ -64,6 +64,63 @@ function leboncoinCRAWLER(url, list_announce, alerte, callback){
 			            	});
 			            	callback(1);
 		            	}
+	            	});
+	                counter += 1;
+             	}
+             	else{
+             		console.log("stop crawler");
+             		clearInterval(delay);  
+             		callback(0)
+             	}
+        	}	
+    	}
+   		
+	});
+}
+
+function FullLeboncoinCRAWLER(url, list_announce, alerte, callback){
+	var headers = {   
+            'User-Agent': 'AdsBot-Google (+http://www.google.com/adsbot.html)',
+            'Content-Type' : 'application/x-www-form-urlencoded' 
+    };
+	var requestOptions  = { encoding: null, url: url, headers: headers }; 
+	request(requestOptions, function(error1, response1, html1){
+		var html1 = iconv.decode(html1, 'iso-8859-1');	
+		if(error1) {
+	   	  console.log("Error: " + error1);
+	   	}
+   		else{
+   			var $ = cheerio.load(html1);
+   			var lastpage_link = $('#last').attr('href');
+   			var re = /\?o=(\d+)/i;
+   			var page = lastpage_link.match(re)[1];
+   			console.log("Get "+page+" pages to crawl. Starting..." );		
+   			var delay = setInterval(delay_function, 15000);
+            var counter = 27;        
+
+            function delay_function(){
+            	if(counter <= page){
+	            	var new_url = url.replace(/\?o=(\d+)/g,  "\?o="+counter);
+	            	console.log("Current url:"+ new_url);
+	            	 
+	                crawl_main_page(new_url, list_announce, alerte, function(res){
+            			if(res == "-1"){
+	                		console.log("Full crawl, don't stop");
+             				//clearInterval(delay);  
+
+             				callback(-1);
+	                	}
+	                	else{
+		                	var date = new Date();
+							date = date.toISOString();
+							
+		                    var insert_db = {timestamp:date, type:"vente", result:""};
+			                insert_db.result = res;
+			                db.insert_database(configDB.db_leboncoin_achat, insert_db, function(res){
+			            		console.log("result insertion:"+res);
+			            	});
+			            	callback(1);
+	            		}
 	            	});
 	                counter += 1;
              	}
@@ -160,13 +217,13 @@ function crawl_child_page(url, alerte, callback){
 			});
 			
 			if(price && surface){
-				roi = src_roi.roi(surface, 14, price);
+				roi = src_roi.roi(surface, 33, price);
 				json_temp.roi = roi;
 				json_temp.price_m2 = Math.round(price / parseInt(surface));
 			}
 
 			if(piece && price){
-				roi_colocation = src_roi.roi_colocation(piece, 450, price);
+				roi_colocation = src_roi.roi_colocation(piece, 500, price);
 				json_temp.roi_colocation = roi_colocation;
 				if(alerte){
 					if(roi_colocation > 12){
@@ -239,7 +296,7 @@ function crawl_main_page (url, list_announce, alerte, callback){
 				if(list_announce.indexOf(id_announce_current) == -1){
 					
 					counter_newcrawl++;
-	     			console.log("this announce hasn't been crawled: "+id_announce_current);
+	     			console.log("this announcecessful write  hasn't been crawled: "+id_announce_current);
 	 		  		var delay = setInterval(delay_function, 5000);
 	                function delay_function(){
 	             
@@ -292,3 +349,4 @@ function crawl_main_page (url, list_announce, alerte, callback){
 
 
 module.exports.leboncoinCRAWLER = leboncoinCRAWLER;
+module.exports.FullLeboncoinCRAWLER = FullLeboncoinCRAWLER;
