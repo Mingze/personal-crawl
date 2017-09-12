@@ -10,9 +10,9 @@ var configDB = require("./config/database.js");
 //paris, creteil, palaiseau, orsay
 // var leboncoin_immo = "https://www.leboncoin.fr/ventes_immobilieres/offres/ile_de_france/?o=1&ret=2&location=Cr%E9teil";
 // var leboncoin_immo = "https://www.leboncoin.fr/ventes_immobilieres/offres/ile_de_france/?o=1&location=Cr%E9teil%2094000%2CPalaiseau%2091120%2COrsay%2091400";
-// var leboncoin_immo = "https://www.leboncoin.fr/ventes_immobilieres/offres/ile_de_france/paris/?o=1";
+var leboncoin_immo = "https://www.leboncoin.fr/ventes_immobilieres/offres/ile_de_france/paris/?o=1&pe=19&ret=2";
 // var leboncoin_immo = "https://www.leboncoin.fr/ventes_immobilieres/offres/ile_de_france/?o=2&location=Nanterre%2092000";
-var leboncoin_immo = "https://www.leboncoin.fr/ventes_immobilieres/offres/ile_de_france/?o=1&ret=1&ret=2&location=Cr%E9teil%2094000";
+// var leboncoin_immo = "https://www.leboncoin.fr/ventes_immobilieres/offres/ile_de_france/?o=1&ret=1&ret=2&location=Cr%E9teil%2094000";
 
 
 //Calcul roi, roi_colocation/
@@ -38,15 +38,24 @@ var critere_boncoin = ["Source", "Annonce_created", "Time_crawled","city_name","
 // crawlSeloger.test_local();
 // var delay = setInterval(run_crawl_boncoin, 9000);
 // run_crawl_boncoin();
-// full_crawl_boncoin();
-seloger_crawler();
+full_crawl_boncoin();
+// seloger_crawler();
 
 function seloger_crawler(){
-	var url = "http://www.seloger.com/list.htm?tri=initial&idtypebien=2,1&idtt=2&ci=940028&LISTING-LISTpg=2&naturebien=1,2,4"
-	db.get_id_announce(configDB.db_leboncoin_achat, function(list_announce){
+	var url = "http://www.seloger.com/list.htm?idtt=2&idtypebien=1,2&cp=75&tri=initial&naturebien=1,2,4&LISTING-LISTpg=1"
+	db.get_id_announce(configDB.db_seloger_achat, function(list_announce){
 		
-		// console.log(list_announce);// crawlSeloger.seloger_crawler(url);
-		crawlSeloger.test_local(list_announce);
+		console.log(list_announce);// crawlSeloger.seloger_crawler(url);
+		crawlSeloger.test_local(list_announce, function(res){
+			// console.log(res);
+			var date = new Date();
+			date = date.toISOString();
+			 var insert_db = {timestamp:date, type:"vente", result:""};
+            insert_db.result = res;
+            db.insert_database(configDB.db_seloger_achat, insert_db, function(res){
+        		console.log("result insertion:"+res);
+        	});
+		});
 	});
 }
 

@@ -7,6 +7,7 @@ var src_roi = require('./roi.js');
 var mailer = require('./mailer.js');
 var fs = require('fs');
 var db = require('./db.js');
+var check_price = require('./check_price.js');
 var configDB = require("./config/database.js");
 
 
@@ -34,24 +35,12 @@ function getSelogerPage(url, callback){
         callback(parseInt(page));
     });
 }
-//fonction for check if the logement has been added and if the price is the same.
-function check_id_loge(id,price,list_announce){
-    console.log(list_announce);
-    var list_id = [];
-    Object.keys(list_announce).forEach(function (key){
-        var idDoc = key;
-        Object.keys(list_announce[key]).forEach(function(id){
-            list_id.push(id);
-            
-        });
-    });
 
-    console.log(list_id)
-}
 
-function test_local(list_announce){
+function test_local(list_announce, callback){
     // console.log(list_announce);
-   fs.readFile(__dirname + '/download/seloger.html', 'utf8', function(err, html){
+    var resultat = [];
+    fs.readFile(__dirname + '/download/seloger.html', 'utf8', function(err, html){
 
         if(err){
             console.log(err);
@@ -71,7 +60,7 @@ function test_local(list_announce){
                 var re =/\/(\d+).htm/i;
                 var id_loge = link.match(re)[1];
                 
-                check_id_loge(id_loge, price, list_announce);
+                check_price.check_id_loge(id_loge, price, list_announce);
 
                 var re = /(\d+) p/i;
                 var piece = param.match(re);
@@ -122,12 +111,15 @@ function test_local(list_announce){
                 
                 //storage
                 // ["Source", "Annonce_created", "Time_crawled","city_name","postcode","type de bien","ges", "classe energie","link", "id_announce","Title","pieces","surface", "prix", "price_m2", "Agence","roi","roi_colocation","Description"];
-                var json_temp = {Source:"seloger" ,"Annonce_created":null, "Time_crawled": date,"city_name": city_name, "postcode": null, "Type": nature_bien, "id_announce": id_loge, "Title": title, "pieces": piece, "surface": surface, "prix": price, "price_m2":price_m2, "roi": roi, "roi_colocation": roi_colocation};
-                console.log(json_temp);
+                var json_temp = {Source:"seloger" ,"Annonce_created":null, "Time_crawled": date,"city_name": city_name, "link": link, "postcode": null, "Type": nature_bien, "id_announce": id_loge, "Title": title, "pieces": piece, "surface": surface, "price": price, "price_m2":price_m2, "roi": roi, "roi_colocation": roi_colocation};
+                // console.log(json_temp);
+                resultat.push(json_temp);
                 // callback(json_temp);
             });
-        }
+        };
+        callback(resultat);
     });
+
 }
 
 
@@ -349,7 +341,8 @@ function coucou(url, city, database,  callback){
         // write in database
             if (json.length > 0){
                 // console.log("New logement found!!" + json + " "+json !=[])
-                var time = new Date();
+                var date = new Date();
+                date = date.toISOString();
                 var insert_db = {city: city, timestamp:time.toISOString(), type:"vente", result:""};
                 insert_db.result = json;
             
@@ -390,31 +383,31 @@ function seloger_crawler(url){
             // var myVar = setInterval(count, 10000);
             var counter = 1;        
 
-            // function count(){
-            //      coucou(url+'&LISTING-LISTpg='+counter, ville, database, function(data){
-            //         if(typeof(data) != 'number' && counter < 1000  && counter < page +1)
-            //         {
-            //             // console.log("Page Number:"+counter);                              
-            //             //if callback json == [], stop crawling
-            //             if (data.length == 0)
-            //             {
-            //                 console.log("NO More for this page "+counter+",crawler continue")
-            //                 // clearInterval(myVar);
-            //                 counter += 1;
-            //             }
-            //             else{
-            //                 counter += 1;
-            //                 console.log("Get "+data.length +" new logement!");
-            //             }     
-            //         }
-            //         else  
-            //         {
-            //             console.log("Crawler stopped")
-            //             clearInterval(myVar);
-            //         }  
-            //     });
+            function count(){
+                 coucou(url+'&LISTING-LISTpg='+counter, ville, database, function(data){
+                    if(typeof(data) != 'number' && counter < 1000  && counter < page +1)
+                    {
+                        // console.log("Page Number:"+counter);                              
+                        //if callback json == [], stop crawling
+                        if (data.length == 0)
+                        {
+                            console.log("NO More for this page "+counter+",crawler continue")
+                            // clearInterval(myVar);
+                            counter += 1;
+                        }
+                        else{
+                            counter += 1;
+                            console.log("Get "+data.length +" new logement!");
+                        }     
+                    }
+                    else  
+                    {
+                        console.log("Crawler stopped")
+                        clearInterval(myVar);
+                    }  
+                });
 
-            // }
+            }
         }
         else{
             console.log("Oops je ne peux plus crawler...Page d'erreur")

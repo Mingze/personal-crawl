@@ -154,7 +154,6 @@ function get_id_announce(database, callback){
                     obj[id] = price; 
                     // list_announce.push(obj1);
                     if(j == result.docs[i].result.length-1){
-                      console.log("in the end")
                       reference[result.docs[i]._id] = obj;
                     }
                 }
@@ -221,7 +220,7 @@ function aggregation_db(database){
 
 
           if(result.docs[i].result && result.docs[i].result.length <10){
-            console.log("for" +result.docs[i]._id+", has"+result.docs[i].result.length +" announces")
+            // console.log("for" +result.docs[i]._id+", has"+result.docs[i].result.length +" announces")
             if(counter != 10){
               //Concatene the 10 results, delete the current doc
               list_result_tmp = list_result_tmp.concat(result.docs[i].result); 
