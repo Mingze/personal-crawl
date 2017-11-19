@@ -149,7 +149,7 @@ function get_id_announce(database, callback){
                 var list_announce = [];
                 for (var j = 0; j < result.docs[i].result.length; j++){
                     var id = result.docs[i].result[j].id_announce;
-                    var price  = result.docs[i].result[j].price ;
+                    var price  = result.docs[i].result[j].price == undefined? result.docs[i].result[j].prix : result.docs[i].result[j].price ;
                     // var obj = {};
                     obj[id] = price; 
                     // list_announce.push(obj1);
