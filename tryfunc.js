@@ -38,25 +38,73 @@ var critere_boncoin = ["Source", "Annonce_created", "Time_crawled","city_name","
 // crawlSeloger.test_local();
 // var delay = setInterval(run_crawl_boncoin, 9000);
 // run_crawl_boncoin();
-full_crawl_boncoin();
-// seloger_crawler();
+//full_crawl_boncoin();
+seloger_crawler();
 
 function seloger_crawler(){
-	var url = "http://www.seloger.com/list.htm?idtt=2&idtypebien=1,2&cp=75&tri=initial&naturebien=1,2,4&LISTING-LISTpg=1"
-	db.get_id_announce(configDB.db_seloger_achat, function(list_announce){
-		
-		console.log(list_announce);// crawlSeloger.seloger_crawler(url);
-		crawlSeloger.test_local(list_announce, function(res){
-			// console.log(res);
-			var date = new Date();
-			date = date.toISOString();
-			 var insert_db = {timestamp:date, type:"vente", result:""};
+    var url = "http://www.seloger.com/list.htm?idtt=2&idtypebien=1,2&cp=75&tri=initial&naturebien=1,2,4&LISTING-LISTpg=1";
+    db.get_id_announce(configDB.db_seloger_achat, function(list_announce){
+
+        /*crawlSeloger.test_local(list_announce, function(res){
+
+            var date = new Date();
+            date = date.toISOString();
+            var insert_db = {timestamp:date, type:"vente", result:""};
             insert_db.result = res;
             db.insert_database(configDB.db_seloger_achat, insert_db, function(res){
-        		console.log("result insertion:"+res);
-        	});
-		});
-	});
+                console.log("result insertion:"+res);
+            });
+
+            res.filter(function(announce){
+                var date = new Date();
+                date = date.toISOString();
+                announce.timestamp = date;
+                announce.type = "vente";
+                db.insert_database(configDB.db_seloger_achat_2, announce, function(res){
+                    console.log("result insertion:"+res);
+                });
+            });
+        });*/
+
+        crawlSeloger.test_local(list_announce, function(res){
+
+            var date = new Date();
+            date = date.toISOString();
+            var insert_db = {timestamp:date, type:"vente", result:""};
+            insert_db.result = res;
+            db.insert_database(configDB.db_seloger_achat, insert_db, function(res){
+                console.log("result insertion:"+res);
+            });
+
+            res.filter(function(announce){
+                var date = new Date();
+                date = date.toISOString();
+                announce.timestamp = date;
+                announce.type = "vente";
+				var databaseToUpdate = configDB.db_seloger_achat_2;
+                db.addUpdateAnnounce(databaseToUpdate, announce, function(result){
+
+                    if(result.docs.length < 1){
+                        db.insert_database(databaseToUpdate, announce, function(res){
+                            console.log("result insertion:"+res);
+                        });
+                    }
+
+
+                    for (var i = 0; i < result.docs.length; i++) {
+                        console.log('Doc id: %s', result.docs[i]._id);
+                        if(result.docs[i].evolution_prices){
+                            result.docs[i].evolution_prices = result.docs[i].evolution_prices.concat(announce.evolution_prices);
+
+                        }
+                        db.insert_database(databaseToUpdate, result.docs[i], function(res){
+                            console.log("result insertion:"+res);
+                        });
+                    }
+				});
+            });
+        });
+    });
 }
 
 function run_crawl_boncoin(){

@@ -59,8 +59,8 @@ function test_local(list_announce, callback){
                 //get id
                 var re =/\/(\d+).htm/i;
                 var id_loge = link.match(re)[1];
-                
-                check_price.check_id_loge(id_loge, price, list_announce);
+
+
 
                 var re = /(\d+) p/i;
                 var piece = param.match(re);
@@ -108,10 +108,16 @@ function test_local(list_announce, callback){
                 var nature_bien = accent.accentsTidy(title.match(re)[2]);
                 var date = new Date();
                 date = date.toISOString();
-                
+
+                var evolution_prices = [];
+
+                if(check_price.check_id_loge(id_loge, price, list_announce)){
+                    evolution_prices = [{"date" : date, "price" : price}];
+                }
+
                 //storage
                 // ["Source", "Annonce_created", "Time_crawled","city_name","postcode","type de bien","ges", "classe energie","link", "id_announce","Title","pieces","surface", "prix", "price_m2", "Agence","roi","roi_colocation","Description"];
-                var json_temp = {Source:"seloger" ,"Annonce_created":null, "Time_crawled": date,"city_name": city_name, "link": link, "postcode": null, "Type": nature_bien, "id_announce": id_loge, "Title": title, "pieces": piece, "surface": surface, "price": price, "price_m2":price_m2, "roi": roi, "roi_colocation": roi_colocation};
+                var json_temp = {Source:"seloger" ,"Annonce_created":null, "Time_crawled": date,"city_name": city_name, "link": link, "postcode": null, "Type": nature_bien, "id_announce": id_loge, "Title": title, "pieces": piece, "surface": surface, "price": price, "evolution_prices":evolution_prices, "price_m2":price_m2, "roi": roi, "roi_colocation": roi_colocation};
                 // console.log(json_temp);
                 resultat.push(json_temp);
                 // callback(json_temp);
@@ -173,7 +179,7 @@ function crawlMainpage(url, list_announce, alerte, callback){
                     
                 }
                 else{
-                    chambre  = null
+                    chambre  = null;
                     console.log("Not found chambre"); 
                 }
 

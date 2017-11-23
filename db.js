@@ -135,9 +135,9 @@ function extract_database(critere, database, name){
 }
 
 function get_id_announce(database, callback){
-  var database = cloudant.db.use(database);
-  var reference = {};
-  database.find({selector:{}}, function(er, result) {
+    var database = cloudant.db.use(database);
+    var reference = {};
+    database.find({selector:{}}, function(er, result) {
         if (er) {
             throw er;
         }
@@ -145,22 +145,44 @@ function get_id_announce(database, callback){
         for (var i = 0; i < result.docs.length; i++) {
             console.log('Doc id: %s', result.docs[i]._id);
             if(result.docs[i].result){
-                var obj = {}; 
+                var obj = {};
                 var list_announce = [];
                 for (var j = 0; j < result.docs[i].result.length; j++){
                     var id = result.docs[i].result[j].id_announce;
                     var price  = result.docs[i].result[j].price == undefined? result.docs[i].result[j].prix : result.docs[i].result[j].price ;
                     // var obj = {};
-                    obj[id] = price; 
+                    obj[id] = price;
                     // list_announce.push(obj1);
                     if(j == result.docs[i].result.length-1){
-                      reference[result.docs[i]._id] = obj;
+                        reference[result.docs[i]._id] = obj;
                     }
                 }
             }
         }
-      callback(reference);
-  });
+        callback(reference);
+    });
+}
+
+function addUpdateAnnounce(database, announce, callback){
+    var database = cloudant.db.use(database);
+    var reference = {};
+    var query_get_announce_by_id = {
+        "selector": {
+            "id_announce": announce.id_announce
+        },
+        "sort": [
+            {
+                "_id": "asc"
+            }
+        ]
+    };
+    database.find(query_get_announce_by_id, function(er, result) {
+        if (er) {
+            throw er;
+        }
+        console.log('Found %d documents', result.docs.length);
+        callback(result);
+    });
 }
 
 //Insert into a data base the json
@@ -241,6 +263,7 @@ function aggregation_db(database){
 
 module.exports.db_leboncoin_achat = db_leboncoin_achat;
 module.exports.get_id_announce = get_id_announce;
+module.exports.addUpdateAnnounce = addUpdateAnnounce;
 module.exports.extract_price = extract_price;
 module.exports.extract_database = extract_database;
 module.exports.insert_database = insert_database;
